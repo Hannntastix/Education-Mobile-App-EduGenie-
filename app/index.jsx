@@ -18,7 +18,7 @@ export default function WelcomeScreen() {
       console.log(user);
       const result = await getDoc(doc(db, 'users', user?.email));
       setUserDetail(result.data())
-      // router.replace('/(tabs)/home')
+      router.replace('/(tabs)/home')
     }
   })
 
