@@ -46,30 +46,36 @@ export default function AddCourse() {
 
   const onGenerateCourse = async () => {
     setLoading(true);
-    const PROMPT = selectedTopics + Prompt.COURSE;
+
+    const PROMPT = `${selectedTopics}\n\n${Prompt.COURSE}\n\nPlease respond in the following JSON format:\n{"courses": [{"title": "...", "description": "...", "level": "...", "duration": "..."}]}`;
 
     try {
       const aiResp = await GenerateCourseAIModel.sendMessage(PROMPT);
       const rawText = aiResp.response.text();
 
+      console.log("RAW AI RESPONSE:", rawText);
+
       let resp;
       try {
         resp = JSON.parse(rawText);
       } catch (jsonError) {
-        console.error("Failed to parse AI response as JSON:", rawText);
+        console.error("❌ Failed to parse AI response as JSON:", jsonError);
+        console.error("Raw text:", rawText);
         setLoading(false);
         return;
       }
 
       const courses = resp?.courses;
+      console.log("✅ Parsed courses:", courses);
+
       if (!Array.isArray(courses)) {
-        console.error("Courses is not an array", courses);
+        console.error("❌ 'courses' is not an array:", courses);
         setLoading(false);
         return;
       }
 
       if (!userDetail || !userDetail.email) {
-        console.error("userDetail is undefined, make sure user is signed in and context is set.");
+        console.error("❌ userDetail is undefined. Make sure the user is signed in and context is set.");
         setLoading(false);
         return;
       }
@@ -84,14 +90,15 @@ export default function AddCourse() {
         )
       );
 
-      console.log("User detail:", userDetail);
+      console.log("✅ Courses successfully saved to Firestore. User:", userDetail.email);
       router.push('/(tabs)/home');
     } catch (e) {
-      console.error("Error in onGenerateCourse:", e);
+      console.error("❌ Error in onGenerateCourse:", e);
     } finally {
       setLoading(false);
     }
   };
+
 
 
   return (

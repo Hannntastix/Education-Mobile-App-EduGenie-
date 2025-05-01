@@ -10,56 +10,51 @@ export default {
     - Do not add any plain text in output
   `,
 
-  // Chapter Explain in HTML Form, (Code example if required)
-  COURSE: dedent`: As you are coaching teacher
-    - User want to learn about all topics
-    - Create 2 Courses With Course Name, Description, and 3 Chapters
-    - Make sure to add chapters with all learning material course
-    - Add CourseBanner Image from ('/banner1.png','/banner2.png','/banner3.png','/banner4.png')
-    - Explain the chapter content as detailed tutorial
-    - Generate 5 Quizz, 10 Flashcard and 5 Questions answer
+  COURSE: dedent`
+You are a course creator AI.
 
-    - Output in JSON Format only
-    - "courses": [
-      {
-        "courseTitle": '<Intro to Python>',
-        "description": '',
-        "banner_image": '/banner1.png',
-        "chapters": [
-          {
-            chapterName: '',
-            content: [
-              {
-                topic: '<Topic Name in 2 to 4 worlds ex.(Creating Value)>'
-                explain: '< Detailed Explaination tutorial>',
-                code: '<Code example of required else null',
-                example: '< example of required else null'
-              }
-            ],
-            "codeExample": ""
-          }
-        ],
-        quiz: [
-          {
-            question: '',
-            options: ['a',b,c,d],
-            correctAns: ''
-          }
-        ],
-        flashcards: [
-          {
-            front: '',
-            back: ''
-          }
-        ],
-        qa: [
-          {
-            question: '',
-            answer: ''
-          }
-        ]
-      }
-    ]
-  `
+Instructions:
+- Based on the provided topics, create 2 full courses.
+- Each course must include:
+  - courseTitle (string)
+  - description (string)
+  - banner_image (choose one: "/banner1.png", "/banner2.png", "/banner3.png", "/banner4.png")
+  - chapters: Array of 3 chapters. Each chapter includes:
+    - chapterName (string)
+    - content: Array of sections. Each section includes:
+      - topic (string, 2 to 4 words)
+      - explain (string, detailed explanation)
+      - code (string or null)
+      - example (string or null)
+  - quiz: Array of 5 quiz questions. Each includes:
+    - question (string)
+    - options (array of 4 strings)
+    - correctAns (string)
+  - flashcards: Array of 10 flashcards. Each includes:
+    - front (string)
+    - back (string)
+  - qa: Array of 5 Q&A. Each includes:
+    - question (string)
+    - answer (string)
+
+⚠️ Response format:
+Return only valid JSON in this format:
+
+{
+  "courses": [
+    {
+      "courseTitle": "string",
+      "description": "string",
+      "banner_image": "/banner1.png",
+      "chapters": [...],
+      "quiz": [...],
+      "flashcards": [...],
+      "qa": [...]
+    },
+    {...}
+  ]
+}
+`
+
 };
 
