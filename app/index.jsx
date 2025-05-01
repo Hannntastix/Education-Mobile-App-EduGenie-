@@ -9,12 +9,11 @@ import { UserDetailContext } from "@/context/UserDetailContext";
 
 export default function WelcomeScreen() {
 
-  const router=useRouter();
-  const {userDetail, setUserDetail} = useContext(UserDetailContext)
+  const router = useRouter();
+  const { userDetail, setUserDetail } = useContext(UserDetailContext)
 
-  onAuthStateChanged(auth, async(user) => {
-    if(user)
-    {
+  onAuthStateChanged(auth, async (user) => {
+    if (user) {
       console.log(user);
       const result = await getDoc(doc(db, 'users', user?.email));
       setUserDetail(result.data())
@@ -62,7 +61,7 @@ export default function WelcomeScreen() {
           color: Colors.GRAY,
           textAlign: "center",
           marginTop: 10,
-          fontFamily:"outfit-regular"
+          fontFamily: "outfit-regular"
         }}
       >
         Discover the best education experience with EduGenie. Start your education journey effortlessly with AI now!!
@@ -101,7 +100,7 @@ export default function WelcomeScreen() {
         }}
         onPress={() => router.push('/auth/signUp')}
       >
-        <Text style={{ color: Colors.PRIMARY, fontSize: 18, fontFamily:"outfit-medium" }}>
+        <Text style={{ color: Colors.PRIMARY, fontSize: 18, fontFamily: "outfit-medium" }}>
           Already have an account?
         </Text>
       </TouchableOpacity>

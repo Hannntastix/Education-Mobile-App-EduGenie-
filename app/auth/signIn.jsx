@@ -36,7 +36,7 @@ export default function SignIn() {
         .then(async (resp) => {
             const user = resp.user
             console.log(user)
-            await getUserDetail()
+            await fetchAndSetUserDetail()
             setIsLoading(false)
             router.replace('/(tabs)/home')
         }).catch(e => {
@@ -46,9 +46,9 @@ export default function SignIn() {
         })
     };
 
-    const getUserDetail = async () => {
+    const fetchAndSetUserDetail = async () => {
         const result = await getDoc(doc(db, "users", email));
-        console.log(result.data);
+        console.log("Fetched user detail:", result.data());
         setUserDetail(result.data());
     }
 
@@ -149,6 +149,7 @@ const styles = StyleSheet.create({
     container: {
         flex: 1,
         backgroundColor: '#ffffff',
+        overflow:'scroll',
     },
     keyboardAvoidingView: {
         flex: 1,
@@ -157,6 +158,7 @@ const styles = StyleSheet.create({
         flex: 1,
         paddingHorizontal: 25,
         justifyContent: 'center',
+        paddingBottom: 25
     },
     logoContainer: {
         alignItems: 'center',
@@ -238,6 +240,7 @@ const styles = StyleSheet.create({
         flexDirection: 'row',
         justifyContent: 'center',
         marginTop: 20,
+        
     },
     signUpText: {
         fontSize: 14,

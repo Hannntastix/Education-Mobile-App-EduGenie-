@@ -1,19 +1,101 @@
-import { View, Text, TextInput, StyleSheet, Platform } from 'react-native'
-import React, { useState } from 'react'
+import { View, Text, TextInput, StyleSheet, Platform, Pressable, ScrollView } from 'react-native'
+import React, { useContext, useState } from 'react'
 import Colors from '../../constant/Colors'
 import Button from '../../components/Shared/Button'
+import { GenerateCourseAIModel, GenerateTopicsAIModel } from '../../config/AiModel'
+import Prompt from '../../constant/Prompt'
+import { doc, setDoc } from 'firebase/firestore'
+import { db } from '../../config/firebaseConfig'
+import { UserDetailContext } from '../../context/UserDetailContext'
+import { useRouter } from 'expo-router'
 
 export default function AddCourse() {
-  const [loading, setLoading] = useState(false)
+  const [loading, setLoading] = useState(false);
+  const [userInput, setUserInput] = useState();
+  const [topics, setTopics] = useState([]);
+  const [selectedTopics, setselectedTopics] = useState([]);
+  const { userDetail, setUserDetail } = useContext(UserDetailContext);
 
-  const onGenerateTopic = () => {
-    // Get Topic Idea For Course
+  const router = useRouter();
+
+  const onGenerateTopic = async () => {
     setLoading(true)
-    setTimeout(() => setLoading(false), 1500)
+    const PROMPT = userInput + Prompt.IDEA;
+    const aiResp = await GenerateTopicsAIModel.sendMessage(PROMPT)
+    const topicIdea = JSON.parse(aiResp.response.text());
+    console.log(topicIdea);
+    setTopics(topicIdea?.course_titles);
+    setLoading(false);
   }
 
+  const onTopicSelect = (topic) => {
+    const isAlreadyExist = selectedTopics.find((item) => item == topic)
+    if (!isAlreadyExist) {
+      setselectedTopics(prev => [...prev, topic])
+    }
+    else {
+      const topics = selectedTopics.filter(item => item !== topic);
+      setselectedTopics(topics);
+    }
+  }
+
+  const isTopicSelected = (topic) => {
+    const selection = selectedTopics.find(item => item == topic);
+    return selection ? true : false
+  }
+
+  const onGenerateCourse = async () => {
+    setLoading(true);
+    const PROMPT = selectedTopics + Prompt.COURSE;
+
+    try {
+      const aiResp = await GenerateCourseAIModel.sendMessage(PROMPT);
+      const rawText = aiResp.response.text();
+
+      let resp;
+      try {
+        resp = JSON.parse(rawText);
+      } catch (jsonError) {
+        console.error("Failed to parse AI response as JSON:", rawText);
+        setLoading(false);
+        return;
+      }
+
+      const courses = resp?.courses;
+      if (!Array.isArray(courses)) {
+        console.error("Courses is not an array", courses);
+        setLoading(false);
+        return;
+      }
+
+      if (!userDetail || !userDetail.email) {
+        console.error("userDetail is undefined, make sure user is signed in and context is set.");
+        setLoading(false);
+        return;
+      }
+
+      await Promise.all(
+        courses.map((course) =>
+          setDoc(doc(db, 'courses', Date.now().toString()), {
+            ...course,
+            createdOn: new Date(),
+            createdBy: userDetail.email,
+          })
+        )
+      );
+
+      console.log("User detail:", userDetail);
+      router.push('/(tabs)/home');
+    } catch (e) {
+      console.error("Error in onGenerateCourse:", e);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+
   return (
-    <View style={styles.container}>
+    <ScrollView style={styles.container}>
       <Text style={styles.title}>Create New Course</Text>
       <Text style={styles.subtitle}>What do you want to learn today?</Text>
 
@@ -22,6 +104,7 @@ export default function AddCourse() {
         style={styles.textInput}
         placeholder='Ex. Learn Python, Digital Marketing, 10th Grade Science...'
         placeholderTextColor={Colors.GRAY}
+        onChangeText={(value) => setUserInput(value)}
       />
 
       <Button
@@ -30,7 +113,38 @@ export default function AddCourse() {
         onPress={onGenerateTopic}
         loading={loading}
       />
-    </View>
+
+      {topics.length > 0 && (
+        <View style={{ marginTop: 15 }}>
+          <Text style={styles.label}>Select All Topics which you want to add</Text>
+
+          <View style={styles.topicContainer}>
+            {topics.map((item, index) => (
+              <Pressable
+                key={index}
+                onPress={() => onTopicSelect(item)}
+                style={[
+                  styles.topicChip,
+                  isTopicSelected(item) && styles.topicChipSelected
+                ]}
+              >
+                <Text style={[
+                  styles.topicText,
+                  isTopicSelected(item) && styles.topicTextSelected
+                ]}>
+                  {item}
+                </Text>
+              </Pressable>
+            ))}
+          </View>
+        </View>
+      )}
+
+      {selectedTopics?.length > 0 && <Button text="Generate Course"
+        onPress={() => onGenerateCourse()}
+        loading={loading}
+      />}
+    </ScrollView>
   )
 }
 
@@ -69,5 +183,35 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: Colors.DARK,
     backgroundColor: Colors.LIGHT_GRAY,
+  },
+  topicContainer: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 8,
+    marginTop: 10,
+  },
+
+  topicChip: {
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    borderRadius: 20,
+    borderWidth: 1,
+    borderColor: Colors.PRIMARY,
+    marginBottom: 8,
+    backgroundColor: Colors.WHITE,
+  },
+
+  topicChipSelected: {
+    backgroundColor: Colors.PRIMARY,
+  },
+
+  topicText: {
+    color: Colors.PRIMARY,
+    fontFamily: 'outfit',
+    fontSize: 14,
+  },
+
+  topicTextSelected: {
+    color: Colors.WHITE,
   },
 })
