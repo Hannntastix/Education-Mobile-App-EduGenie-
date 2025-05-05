@@ -4,8 +4,8 @@ import Colors from '../../constant/Colors'
 import Button from '../../components/Shared/Button'
 import { GenerateCourseAIModel, GenerateTopicsAIModel } from '../../config/AiModel'
 import Prompt from '../../constant/Prompt'
-import { doc, setDoc } from 'firebase/firestore'
-import { db } from '../../config/firebaseConfig'
+import { doc, getDoc, setDoc } from 'firebase/firestore'
+import { auth, db } from '../../config/firebaseConfig'
 import { UserDetailContext } from '../../context/UserDetailContext'
 import { useRouter } from 'expo-router'
 
@@ -47,60 +47,28 @@ export default function AddCourse() {
   const onGenerateCourse = async () => {
     setLoading(true);
 
-    const PROMPT = `${selectedTopics}\n\n${Prompt.COURSE}\n\nPlease respond in the following JSON format:\n{"courses": [{"title": "...", "description": "...", "level": "...", "duration": "..."}]}`;
-
+    const PROMPT = selectedTopics + Prompt.COURSE;
     try {
       const aiResp = await GenerateCourseAIModel.sendMessage(PROMPT);
-      const rawText = aiResp.response.text();
+      const resp = JSON.parse(aiResp.response.text());
+      const courses = resp.courses;
 
-      console.log("RAW AI RESPONSE:", rawText);
-
-      let resp;
-      try {
-        resp = JSON.parse(rawText);
-      } catch (jsonError) {
-        console.error("❌ Failed to parse AI response as JSON:", jsonError);
-        console.error("Raw text:", rawText);
-        setLoading(false);
-        return;
-      }
-
-      const courses = resp?.courses;
-      console.log("✅ Parsed courses:", courses);
-
-      if (!Array.isArray(courses)) {
-        console.error("❌ 'courses' is not an array:", courses);
-        setLoading(false);
-        return;
-      }
-
-      if (!userDetail || !userDetail.email) {
-        console.error("❌ userDetail is undefined. Make sure the user is signed in and context is set.");
-        setLoading(false);
-        return;
-      }
-
-      await Promise.all(
-        courses.map((course) =>
-          setDoc(doc(db, 'courses', Date.now().toString()), {
-            ...course,
-            createdOn: new Date(),
-            createdBy: userDetail.email,
-          })
-        )
-      );
-
-      console.log("✅ Courses successfully saved to Firestore. User:", userDetail.email);
+      courses?.forEach(async (course) => {
+        await setDoc(doc(db, 'courses', Date.now().toString()), {
+          ...course,
+          createdOn: new Date(),
+          createdBy: userDetail?.email,
+        })
+      })
       router.push('/(tabs)/home');
-    } catch (e) {
-      console.error("❌ Error in onGenerateCourse:", e);
-    } finally {
       setLoading(false);
     }
-  };
+    catch (e) {
+      setLoading(false);
+    }
 
 
-
+  }
   return (
     <ScrollView style={styles.container}>
       <Text style={styles.title}>Create New Course</Text>
