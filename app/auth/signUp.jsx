@@ -32,14 +32,13 @@ export default function SignUp() {
             .then(async (resp) => {
                 const user = resp.user;
                 console.log(user);
-                await SaveUser(user);// kirim user ke fungsi
+                await SaveUser(user);
             })
             .catch(e => {
                 console.log(e.message);
             })
     };
 
-    // terima user sebagai parameter
     const SaveUser = async (user) => {
         const data = {
             name: fullName,

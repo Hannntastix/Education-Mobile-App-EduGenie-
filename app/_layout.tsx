@@ -1,8 +1,12 @@
+import { useEffect, useState } from "react";
+import { onAuthStateChanged } from "firebase/auth";
+import { doc, getDoc } from "firebase/firestore";
+import { auth, db } from "../config/firebaseConfig";
+
+import { UserDetailContext } from "./../context/UserDetailContext";
+import { View, ActivityIndicator } from "react-native";
 import { Stack } from "expo-router";
 import { useFonts } from "expo-font";
-import { UserDetailContext } from "./../context/UserDetailContext"
-import { useState } from "react";
-import { View, ActivityIndicator } from "react-native";
 
 export default function RootLayout() {
   const [fontsLoaded] = useFonts({
@@ -12,9 +16,25 @@ export default function RootLayout() {
   });
 
   const [userDetail, setUserDetail] = useState(null);
+  const [authChecked, setAuthChecked] = useState(false);
 
-  // Jangan render apa-apa sebelum fonts selesai dimuat
-  if (!fontsLoaded) {
+  useEffect(() => {
+    const unsubscribe = onAuthStateChanged(auth, async (user) => {
+      if (user) {
+        const docSnap = await getDoc(doc(db, "users", user.email));
+        if (docSnap.exists()) {
+          setUserDetail({ ...docSnap.data(), email: user.email });
+        }
+      } else {
+        setUserDetail(null);
+      }
+      setAuthChecked(true);
+    });
+
+    return unsubscribe;
+  }, []);
+
+  if (!fontsLoaded || !authChecked) {
     return (
       <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
         <ActivityIndicator size="large" color="#000" />

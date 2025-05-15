@@ -7,6 +7,9 @@ import { collection, getDocs, query, where } from 'firebase/firestore'
 import { db } from '../../config/firebaseConfig'
 import { UserDetailContext } from '../../context/UserDetailContext'
 import CourseList from '../../components/Home/CourseList'
+import PracticeSection from '../../components/Home/PracticeSection'
+import CourseProgress from '../../components/Home/CourseProgress'
+import { FlatList } from 'react-native'
 
 export default function Home() {
 
@@ -14,38 +17,54 @@ export default function Home() {
 
     const [courseList, setCourseList] = useState([]);
 
+    useEffect(() => {
+        if (userDetail?.email) {
+            GetCourseList();
+        }
+    }, [userDetail]);
+
+
+
+    console.log("CourseList props:", courseList);
+
+
     const GetCourseList = async () => {
-        const q = query(collection(db, 'courses'), where("createdBy", '==', userDetail?.email));
-        const querySnapshot = await getDocs(q);
+        try {
+            const q = query(collection(db, 'courses'), where("createdBy", "==", userDetail?.email));
+            const querySnapshot = await getDocs(q);
 
-        useEffect(() => {
-            userDetail && GetCourseList();
-        }, [userDetail]);
+            const courses = querySnapshot.docs.map((doc) => ({
+                id: doc.id,
+                ...doc.data(),
+            }));
 
-        querySnapshot.forEach((doc) => {
-            console.log('--', doc.data);
-            setCourseList(prev => [...prev, doc.data()])
-        })
-    }
+            setCourseList(courses);
+        } catch (error) {
+            console.error("Error fetching courses:", error);
+        }
+    };
 
     return (
-        <View style={{
-            paddingHorizontal: 25,
-            paddingTop: Platform.OS === 'ios' ? 50 : 30,
-            flex: 1,
-            backgroundColor: Colors.WHITE,
-        }}>
-            <Header />
-            <View style={{
-                justifyContent: "center",
-                flex: 1,
-            }}>
-                {courseList?.length == 0 ?
-                    <NoCourse /> :
-                    <CourseList />
-                }
-
-            </View>
-        </View>
+        <FlatList
+            data={[]}
+            ListHeaderComponent={
+                <View style={{
+                    paddingHorizontal: 25,
+                    paddingTop: Platform.OS === 'ios' ? 50 : 30,
+                    flex: 1,
+                    backgroundColor: Colors.WHITE,
+                }}>
+                    <Header />
+                    {courseList?.length == 0 ?
+                        <NoCourse /> :
+                        <View>
+                            <CourseProgress courseList={courseList} />
+                            <PracticeSection />
+                            <CourseList courseList={courseList} />
+                        </View>
+                    }
+                    {/* <CourseList /> */}
+                </View>
+            }/>
     )
 }

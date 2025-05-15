@@ -23,7 +23,7 @@ export default function Header() {
                     fontFamily: "outfit",
                     fontSize: 16,
                     color: Colors.GRAY,
-                }}>Let's Get Started</Text>
+                }}>Let's Make Great Journey!</Text>
             </View>
             <TouchableOpacity style={{
                 backgroundColor: Colors.LIGHT_GRAY,
