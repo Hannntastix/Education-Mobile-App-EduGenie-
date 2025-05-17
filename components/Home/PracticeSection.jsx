@@ -2,8 +2,11 @@ import { View, Text, FlatList, Image, StyleSheet, TouchableOpacity } from 'react
 import React from 'react';
 import { PracticeOption } from '../../constant/Option';
 import Colors from '../../constant/Colors';
+import { useRouter } from 'expo-router';
 
 export default function PracticeSection() {
+
+    const router = useRouter();
     return (
         <View style={styles.container}>
             <Text style={styles.sectionTitle}>Practice Yourself Here ✨</Text>
@@ -18,6 +21,7 @@ export default function PracticeSection() {
                     <TouchableOpacity
                         style={styles.itemContainer}
                         activeOpacity={0.8}
+                        onPress={() => router.push('/practice/' + item.name)}
                     >
                         <View style={styles.imageWrapper}>
                             <Image

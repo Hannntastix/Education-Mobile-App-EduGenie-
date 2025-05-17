@@ -17,6 +17,8 @@ export default function Home() {
 
     const [courseList, setCourseList] = useState([]);
 
+    const [loading, setLoading] = useState(false)
+
     useEffect(() => {
         if (userDetail?.email) {
             GetCourseList();
@@ -30,6 +32,7 @@ export default function Home() {
 
     const GetCourseList = async () => {
         try {
+            setLoading(true);
             const q = query(collection(db, 'courses'), where("createdBy", "==", userDetail?.email));
             const querySnapshot = await getDocs(q);
 
@@ -41,12 +44,17 @@ export default function Home() {
             setCourseList(courses);
         } catch (error) {
             console.error("Error fetching courses:", error);
+        } finally {
+            setLoading(false); // <- ini lebih aman di finally
         }
+
     };
 
     return (
         <FlatList
             data={[]}
+            onRefresh={() => GetCourseList()}
+            refreshing={loading}
             ListHeaderComponent={
                 <View style={{
                     paddingHorizontal: 25,
@@ -65,6 +73,6 @@ export default function Home() {
                     }
                     {/* <CourseList /> */}
                 </View>
-            }/>
+            } />
     )
 }

@@ -5,6 +5,15 @@ import Colors from '../../constant/Colors';
 import * as Progress from 'react-native-progress';
 
 export default function CourseProgress({ courseList }) {
+
+    const GetCompletedChapters = (course) => {
+        const completed = course?.completedChapter?.length || 0;
+        const total = course?.chapters?.length || 0;
+        const percentage = total > 0 ? completed / total : 0;
+        const percentageText = `${Math.round(percentage * 100)}%`;
+        return { percentage, percentageText };
+    }
+
     return (
         <View style={styles.container}>
             <Text style={styles.sectionTitle}>Course Progress 📈</Text>
@@ -15,47 +24,54 @@ export default function CourseProgress({ courseList }) {
                 showsHorizontalScrollIndicator={false}
                 contentContainerStyle={styles.listContainer}
                 keyExtractor={(item) => item.id}
-                renderItem={({ item, index }) => (
-                    <TouchableOpacity
-                        activeOpacity={0.9}
-                        style={styles.courseCard}
-                    >
-                        <View style={styles.cardHeader}>
-                            <Image
-                                source={imageAssets[item?.banner_image]}
-                                style={styles.courseImage}
-                            />
-                            <View style={styles.courseInfo}>
-                                <Text
-                                    numberOfLines={2}
-                                    style={styles.courseTitle}
-                                >
-                                    {item?.courseTitle}
-                                </Text>
-                                <Text style={styles.chapterCount}>
-                                    {item?.chapters?.length} Chapters
-                                </Text>
+                renderItem={({ item, index }) => {
+                    const { percentage, percentageText } = GetCompletedChapters(item);
+                    return (
+                        <TouchableOpacity
+                            activeOpacity={0.9}
+                            style={styles.courseCard}
+                        >
+                            <View style={styles.cardHeader}>
+                                <Image
+                                    source={imageAssets[item?.banner_image]}
+                                    style={styles.courseImage}
+                                />
+                                <View style={styles.courseInfo}>
+                                    <Text
+                                        numberOfLines={2}
+                                        style={styles.courseTitle}
+                                    >
+                                        {item?.courseTitle}
+                                    </Text>
+                                    <Text style={styles.chapterCount}>
+                                        {item?.chapters?.length} Chapters
+                                    </Text>
+                                </View>
                             </View>
-                        </View>
 
-                        <View style={styles.progressContainer}>
-                            <View style={styles.progressHeader}>
-                                <Text style={styles.progressText}>3 of 5 chapters completed</Text>
-                                <Text style={styles.progressPercentage}>60%</Text>
+                            <View style={styles.progressContainer}>
+                                <View style={styles.progressHeader}>
+                                    {item?.completedChapter?.length > 0 ? <Text style={styles.progressText}>
+                                        {item?.completedChapter?.length} of {item?.chapters?.length} chapters completed
+                                    </Text> : <Text style={styles.progressText}>
+                                        0 of {item?.chapters?.length} chapters completed
+                                    </Text>}
+                                    <Text style={styles.progressPercentage}>{percentageText}</Text>
+                                </View>
+                                <Progress.Bar
+                                    progress={percentage}
+                                    width={null}
+                                    color={Colors.PRIMARY}
+                                    unfilledColor="#E0E0E0"
+                                    borderWidth={0}
+                                    height={8}
+                                    borderRadius={4}
+                                    style={styles.progressBar}
+                                />
                             </View>
-                            <Progress.Bar
-                                progress={0.6}
-                                width={null}
-                                color={Colors.PRIMARY}
-                                unfilledColor="#E0E0E0"
-                                borderWidth={0}
-                                height={8}
-                                borderRadius={4}
-                                style={styles.progressBar}
-                            />
-                        </View>
-                    </TouchableOpacity>
-                )}
+                        </TouchableOpacity>
+                    )
+                }}
             />
         </View>
     );
