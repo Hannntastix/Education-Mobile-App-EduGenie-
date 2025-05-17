@@ -1,9 +1,11 @@
-import { View, Text, Pressable, StyleSheet, Image, FlatList } from 'react-native';
-import React, { useState } from 'react';
+import { View, Text, Pressable, StyleSheet, Image, FlatList, ActivityIndicator } from 'react-native';
+import React, { useEffect, useState } from 'react';
 import { Ionicons } from '@expo/vector-icons';
 import * as Progress from 'react-native-progress';
 import Colors from '../../constant/Colors';
 import { useLocalSearchParams, useRouter } from 'expo-router';
+import { db } from './../../config/firebaseConfig'
+import { doc, updateDoc } from 'firebase/firestore'
 
 export default function Quiz() {
     const { courseParams } = useLocalSearchParams();
@@ -11,6 +13,17 @@ export default function Quiz() {
     const [currentQuestion, setCurrentQuestion] = useState(0);
     const [selectedOption, setSelectedOption] = useState({});
     const [result, setResult] = useState([]);
+    const [loading, setLoading] = useState(false);
+
+    useEffect(() => {
+        if (result[currentQuestion]) {
+            const selectedChoice = quiz[currentQuestion].options.indexOf(result[currentQuestion].userChoice);
+            setSelectedOption(selectedChoice);
+        } else {
+            setSelectedOption(null);
+        }
+    }, [currentQuestion]);
+
 
     const quiz = course?.quiz;
 
@@ -22,17 +35,17 @@ export default function Quiz() {
     }
 
     const OnOptionSelect = (selectedChoice) => {
-        setResult(prev => ({
-            ...prev,
-            [currentQuestion]: {
-                userChoice: selectedChoice,
-                isCorrect: quiz[currentQuestion]?.correctAns == selectedChoice,
-                question: quiz[currentQuestion]?.question,
-                correctAns: quiz[currentQuestion]?.correctAns
-            }
-        }));
+        const updatedResult = [...result];
+        updatedResult[currentQuestion] = {
+            userChoice: selectedChoice,
+            isCorrect: quiz[currentQuestion]?.correctAns == selectedChoice,
+            question: quiz[currentQuestion]?.question,
+            correctAns: quiz[currentQuestion]?.correctAns
+        };
+        setResult(updatedResult);
         console.log(result);
-    }
+    };
+
 
     const handleNext = () => {
         setCurrentQuestion(currentQuestion + 1);
@@ -45,6 +58,26 @@ export default function Quiz() {
             setSelectedOption(null);
         }
     };
+
+    const onQuizFinish = async () => {
+        //simpan data ke database
+        setLoading(true);
+        try {
+            await updateDoc(doc(db, 'courses', course.docId), {
+                quizResult: result
+            });
+            setLoading(false);
+            router.replace({
+                pathname: '/quiz/summary',
+                params: {
+                    quizResultParam: JSON.stringify(result)
+                }
+            })
+        } catch (e) {
+            setLoading(false);
+        }
+        //navigate ke halaman hasil
+    }
 
     return (
         <View style={styles.container}>
@@ -68,7 +101,7 @@ export default function Quiz() {
                     height={10}
                     borderRadius={6}
                 />
-                <Text style={styles.progressText}>{quiz[currentQuestion]?.question}</Text>
+                <Text style={styles.progressText}>{currentQuestion + 1} of {quiz?.length}</Text>
             </View>
 
             {/* Question Field */}
@@ -114,6 +147,22 @@ export default function Quiz() {
                     disabled={currentQuestion === quiz?.question?.length - 1}
                 >
                     <Text style={styles.navButtonText}>Next</Text>
+                </Pressable>}
+
+                {(selectedOption?.toString() && quiz?.length - 1 == currentQuestion) && <Pressable
+                    onPress={() => onQuizFinish()}
+                    loading={loading}
+                    style={[
+                        styles.navButton,
+                        currentQuestion === quiz?.question?.length - 1 && styles.disabledButton,
+                    ]}
+                    disabled={currentQuestion === quiz?.question?.length - 1}
+                >
+                    {loading ? (
+                        <ActivityIndicator size="small" color="#fff" />
+                    ) : (
+                        <Text style={styles.navButtonText}>Submit</Text>
+                    )}
                 </Pressable>}
             </View>
         </View>
