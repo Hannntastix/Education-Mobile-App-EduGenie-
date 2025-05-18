@@ -19,23 +19,25 @@ Instructions:
   - courseTitle (string)
   - description (string)
   - banner_image (choose one: "/banner1.png", "/banner2.png", "/banner3.png", "/banner4.png")
-  - chapters: Array of 3 chapters. Each chapter includes:
+  - category (string)
+  - chapters: Array of 5 to 8 chapters. Each chapter includes:
     - chapterName (string)
     - content: Array of sections. Each section includes:
       - topic (string, 2 to 4 words)
       - explain (string, detailed explanation)
       - code (string or null)
       - example (string or null)
-  - quiz: Array of 5 quiz questions. Each includes:
+  - quiz: Array of 10 quiz questions. Each includes:
     - question (string)
     - options (array of 4 strings)
     - correctAns (string)
   - flashcards: Array of 10 flashcards. Each includes:
     - front (string)
     - back (string)
-  - qa: Array of 5 Q&A. Each includes:
-    - question (string)
+  - qa: Array of 10 Q&A. Each includes:
+    - question (string) 
     - answer (string)
+  - Tag each course to one of the category from : ["Tech & Coding", "Business & Finance", "Health & Fitness", "Science & Engineering", "Arts & Creativity"]
 
 ⚠️ Response format:
 Return only valid JSON in this format:

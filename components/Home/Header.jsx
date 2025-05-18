@@ -12,6 +12,7 @@ export default function Header() {
             justifyContent: 'space-between',
             alignItems: 'center',
             marginBottom: 20,
+            marginTop: 20,
         }}>
             <View>
                 <Text style={{
@@ -19,6 +20,11 @@ export default function Header() {
                     fontSize: 24,
                     color: Colors.PRIMARY,
                 }}>Hello, {userDetail?.name || 'User'}</Text>
+                <Text style={{
+                    fontFamily: "outfit-bold",
+                    fontSize: 25,
+                    color: Colors.PRIMARY,
+                }}>Welcome to EduGenie!</Text>
                 <Text style={{
                     fontFamily: "outfit",
                     fontSize: 16,

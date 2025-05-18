@@ -35,6 +35,7 @@ export default function CourseView() {
     return (
         <FlatList
             data={[]}
+            showsVerticalScrollIndicator={false}
             ListHeaderComponent={
                 <View style={{
                     flex: 1,

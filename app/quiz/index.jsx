@@ -43,7 +43,6 @@ export default function Quiz() {
             correctAns: quiz[currentQuestion]?.correctAns
         };
         setResult(updatedResult);
-        console.log(result);
     };
 
 

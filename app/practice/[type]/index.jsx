@@ -69,7 +69,7 @@ export default function PracticeTypeHomeScreen() {
 const styles = StyleSheet.create({
     headerContainer: {
         position: 'absolute',
-        top: 0,
+        top: 30,
         left: 15,
         right: 0,
         paddingHorizontal: 20,
@@ -92,5 +92,8 @@ const styles = StyleSheet.create({
         color: Colors.WHITE,
         marginLeft: 10,
         flex: 1,
+        textShadowColor: 'rgba(0, 68, 255, 0.3)',
+        textShadowOffset: { width: 2, height: 3 },
+        textShadowRadius: 2,
     },
 });

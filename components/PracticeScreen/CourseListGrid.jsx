@@ -13,14 +13,12 @@ export default function CourseListGrid({ courseList, option }) {
     const [expandedItem, setExpandedItem] = useState(null);
 
     const onPress = (course) => {
-        if (option?.name === 'Quiz') {
-            router.push({
-                pathname: '/quiz',
-                params: {
-                    courseParams: JSON.stringify(course)
-                }
-            });
-        }
+        router.push({
+            pathname: option.path,
+            params: {
+                courseParams: JSON.stringify(course)
+            }
+        });
     };
 
     const toggleExpand = (courseId) => {
@@ -116,7 +114,7 @@ export default function CourseListGrid({ courseList, option }) {
         <View style={styles.container}>
             <Text style={styles.sectionTitle}>My {option?.name} Collection</Text>
             <Text style={styles.sectionSubtitle}>
-                {courseList?.length || 0} {option?.name}{courseList?.length !== 1 ? 'zes' : ''} available
+                {courseList?.length || 0} {option?.name}{courseList?.length !== 1 ? '' : ''} available
             </Text>
 
             {renderNoCoursesMessage()}

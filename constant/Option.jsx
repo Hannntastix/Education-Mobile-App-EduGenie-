@@ -2,18 +2,22 @@ export const PracticeOption = [
     {
         name: 'Quiz',
         image: require('./../assets/images/Quiz.jpg'),
-        icon: require('./../assets/images/Task.png')
+        icon: require('./../assets/images/Task.png'),
+        path: '/quiz'
     },
     {
         name: 'Flashcards',
         image: require('./../assets/images/Achievement.jpg'),
-        icon: require('./../assets/images/Flashcard.png')
+        icon: require('./../assets/images/Flashcard.png'),
+        path: '/flashcards'
+
     },
     {
         name: 'Question & Ans',
         image: require('./../assets/images/Question.png'),
-        icon: require('./../assets/images/QandA.png')
-    } 
+        icon: require('./../assets/images/QandA.png'),
+        path: '/questionAnswer'
+    }
 ]
 
 export const imageAssets = {
@@ -23,3 +27,5 @@ export const imageAssets = {
     '/banner4.png': require('./../assets/images/banner4.png'),
     '/banner5.png': require('./../assets/images/banner5.png'),
 }
+
+export const CourseCategory = ["Tech & Coding", "Business & Finance", "Health & Fitness", "Science & Engineering", "Arts & Creativity"]

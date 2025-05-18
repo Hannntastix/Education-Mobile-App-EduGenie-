@@ -8,6 +8,7 @@ import { doc, getDoc, setDoc } from 'firebase/firestore'
 import { auth, db } from '../../config/firebaseConfig'
 import { UserDetailContext } from '../../context/UserDetailContext'
 import { useRouter } from 'expo-router'
+import { Ionicons } from '@expo/vector-icons'
 
 export default function AddCourse() {
   const [loading, setLoading] = useState(false);
@@ -73,8 +74,21 @@ export default function AddCourse() {
   }
   return (
     <ScrollView style={styles.container}>
-      <Text style={styles.title}>Create New Course</Text>
-      <Text style={styles.subtitle}>What do you want to learn today?</Text>
+      <View>
+        <View style={{
+          display: 'flex',
+          flexDirection: 'row',
+          alignItems: 'center'
+        }}>
+          <Pressable onPress={() => router.back()} style={styles.backButton}>
+            <Ionicons name="arrow-back" size={24} color="black" />
+          </Pressable>
+          <View>
+            <Text style={styles.title}>Create New Course</Text>
+            <Text style={styles.subtitle}>What do you want to learn today?</Text>
+          </View>
+        </View>
+      </View>
 
       <Text style={styles.label}>What course you want to create?</Text>
       <TextInput
@@ -130,8 +144,16 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: Colors.WHITE,
     padding: 24,
-    paddingTop: Platform.OS === 'ios' ? 50 : 30,
+    paddingTop: 50,
     gap: 16,
+  },
+  backButton: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    backgroundColor: 'rgba(255,255,255,0.2)',
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   title: {
     fontSize: 24,

@@ -45,7 +45,7 @@ export default function Home() {
         } catch (error) {
             console.error("Error fetching courses:", error);
         } finally {
-            setLoading(false); // <- ini lebih aman di finally
+            setLoading(false);
         }
 
     };
@@ -54,6 +54,7 @@ export default function Home() {
         <FlatList
             data={[]}
             onRefresh={() => GetCourseList()}
+            showsVerticalScrollIndicator={false}
             refreshing={loading}
             ListHeaderComponent={
                 <View style={{

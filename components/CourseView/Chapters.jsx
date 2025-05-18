@@ -38,6 +38,7 @@ export default function Chapters({ course }) {
                         style={{
                             padding: 15,
                             borderWidth: 0.5,
+                            borderColor: Colors.PRIMARY,
                             borderRadius: 15,
                             marginTop: 10,
                             display: 'flex',
