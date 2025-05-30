@@ -10,6 +10,10 @@ import CourseList from '../../components/Home/CourseList'
 import PracticeSection from '../../components/Home/PracticeSection'
 import CourseProgress from '../../components/Home/CourseProgress'
 import { FlatList } from 'react-native'
+import { useFocusEffect } from '@react-navigation/native';
+import { useCallback } from 'react';
+import { useLocalSearchParams } from 'expo-router';
+
 
 export default function Home() {
 
@@ -17,17 +21,18 @@ export default function Home() {
 
     const [courseList, setCourseList] = useState([]);
 
-    const [loading, setLoading] = useState(false)
+    const [loading, setLoading] = useState(false);
 
-    useEffect(() => {
-        if (userDetail?.email) {
-            GetCourseList();
-        }
-    }, [userDetail]);
+    const { reload } = useLocalSearchParams();
 
+    useFocusEffect(
+        useCallback(() => {
+            if (userDetail?.email) {
+                GetCourseList();
+            }
+        }, [userDetail, reload])
+    );
 
-
-    console.log("CourseList props:", courseList);
 
 
     const GetCourseList = async () => {

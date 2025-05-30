@@ -19,37 +19,41 @@ import { auth, db } from '../../config/firebaseConfig';
 import { getUserDetail, UserDetailContext } from '../../context/UserDetailContext'
 import { doc, getDoc } from 'firebase/firestore';
 import { useRouter } from 'expo-router';
+import PasswordValidationModal from '../../components/PasswordValidation/PasswordValidationModal';
 
 export default function SignIn() {
     const router = useRouter();
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
     const [secureTextEntry, setSecureTextEntry] = useState(true);
-    const {userDetail, setUserDetail} = useContext(UserDetailContext)
+    const { userDetail, setUserDetail } = useContext(UserDetailContext)
     const [loading, setIsLoading] = useState(false);
+    const [modalVisible, setModalVisible] = useState(false);
 
     const navigation = useNavigation();
 
     const handleSignIn = () => {
         setIsLoading(true)
         signInWithEmailAndPassword(auth, email, password)
-        .then(async (resp) => {
-            const user = resp.user
-            console.log(user)
-            await fetchAndSetUserDetail()
-            setIsLoading(false)
-            router.replace('/(tabs)/home')
-        }).catch(e => {
-            console.log(e)
-            setIsLoading(false)
-            // ToastAndroid.show('Incorrect Email and Password', ToastAndroid.BOTTOM)
-        })
+            .then(async (resp) => {
+                const user = resp.user
+                await fetchAndSetUserDetail()
+                setIsLoading(false)
+                router.replace({ pathname: '/(tabs)/home', params: { reload: Date.now() } })
+            }).catch(e => {
+                console.log(e)
+                setIsLoading(false)
+                setModalVisible(true);
+            })
     };
 
     const fetchAndSetUserDetail = async () => {
         const result = await getDoc(doc(db, "users", email));
-        console.log("Fetched user detail:", result.data());
         setUserDetail(result.data());
+    }
+
+    const handleRoute = () => {
+        router.push('/forgotPassword')
     }
 
     const navigateToSignUp = () => {
@@ -116,7 +120,7 @@ export default function SignIn() {
                     </View>
 
                     {/* Forgot Password */}
-                    <TouchableOpacity style={styles.forgotPasswordContainer}>
+                    <TouchableOpacity onPress={handleRoute} style={styles.forgotPasswordContainer}>
                         <Text style={styles.forgotPasswordText}>Forgot Password?</Text>
                     </TouchableOpacity>
 
@@ -126,10 +130,10 @@ export default function SignIn() {
                         onPress={handleSignIn}
                         disabled={loading}
                     >
-                        {!loading ? 
-                        <Text style={styles.signInButtonText}>Sign In</Text>
-                    : <ActivityIndicator size="small" color="#FFF" />
-                    }
+                        {!loading ?
+                            <Text style={styles.signInButtonText}>Sign In</Text>
+                            : <ActivityIndicator size="small" color="#FFF" />
+                        }
                     </TouchableOpacity>
 
                     {/* Sign Up Navigation */}
@@ -141,6 +145,10 @@ export default function SignIn() {
                     </View>
                 </View>
             </KeyboardAvoidingView>
+            <PasswordValidationModal
+                visible={modalVisible}
+                onDismiss={() => setModalVisible(false)}
+            />
         </SafeAreaView>
     );
 }
@@ -149,7 +157,7 @@ const styles = StyleSheet.create({
     container: {
         flex: 1,
         backgroundColor: '#ffffff',
-        overflow:'scroll',
+        overflow: 'scroll',
     },
     keyboardAvoidingView: {
         flex: 1,
@@ -240,7 +248,7 @@ const styles = StyleSheet.create({
         flexDirection: 'row',
         justifyContent: 'center',
         marginTop: 20,
-        
+
     },
     signUpText: {
         fontSize: 14,

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useContext, useEffect, useState } from 'react';
 import {
   View,
   Text,
@@ -12,10 +12,63 @@ import {
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Feather, MaterialIcons, AntDesign, FontAwesome5 } from '@expo/vector-icons';
+import { UserDetailContext } from '../../context/UserDetailContext';
+import { collection, getDocs, query, where } from 'firebase/firestore';
+import { auth, db } from '../../config/firebaseConfig';
+import { useRouter } from 'expo-router';
+import Colors from '../../constant/Colors';
+import { signOut } from 'firebase/auth';
+import LogoutConfirmationModal from '../../components/ProfileConfirm/LogOutConfirmationModal';
 
 const { width } = Dimensions.get('window');
 
 const ProfileScreen = () => {
+
+  const { userDetail, setUserDetail } = useContext(UserDetailContext)
+  const [courseList, setCourseList] = useState([]);
+  const [loading, setLoading] = useState(false);
+  const [modalVisible, setModalVisible] = useState(false);
+
+  const route = useRouter();
+
+  useEffect(() => {
+    if (userDetail?.email) {
+      GetCourseList();
+    }
+  }, [userDetail]);
+
+  const GetCourseList = async () => {
+    try {
+      setLoading(true);
+      const q = query(collection(db, 'courses'), where("createdBy", "==", userDetail?.email));
+      const querySnapshot = await getDocs(q);
+
+      const courses = querySnapshot.docs.map((doc) => ({
+        id: doc.id,
+        ...doc.data(),
+      }));
+
+      setCourseList(courses);
+    } catch (error) {
+      console.error("Error fetching courses:", error);
+    } finally {
+      setLoading(false);
+    }
+
+  };
+
+  const onSignOut = () => {
+    signOut(auth)
+      .then(() => {
+        setModalVisible(false);
+        route.push('/');
+      })
+      .catch((error) => {
+        console.log("Logout error:", error);
+      });
+  };
+
+
   const [userData] = useState({
     name: 'Rehan',
     email: 'rehan121203@gmail.com',
@@ -39,8 +92,8 @@ const ProfileScreen = () => {
   };
 
   const MenuCard = ({ icon, title, subtitle, onPress, color = '#667EEA' }) => (
-    <TouchableOpacity 
-      style={[styles.menuCard, darkMode && styles.menuCardDark]} 
+    <TouchableOpacity
+      style={[styles.menuCard, darkMode && styles.menuCardDark]}
       onPress={onPress}
       activeOpacity={0.8}
     >
@@ -67,14 +120,14 @@ const ProfileScreen = () => {
   return (
     <View style={[styles.container, darkMode && styles.containerDark]}>
       <StatusBar barStyle={darkMode ? 'light-content' : 'dark-content'} />
-      
+
       {/* Header with gradient */}
       <LinearGradient
         colors={darkMode ? ['#2D3748', '#1A202C'] : ['#667EEA', '#764BA2']}
         style={styles.header}
       >
         <View style={styles.headerTop}>
-          <TouchableOpacity onPress={() => handleMenuPress('Back')}>
+          <TouchableOpacity onPress={() => route.back()}>
             <Feather name="arrow-left" size={24} color="white" />
           </TouchableOpacity>
           <Text style={styles.headerTitle}>Profile</Text>
@@ -86,10 +139,22 @@ const ProfileScreen = () => {
 
       <ScrollView showsVerticalScrollIndicator={false} style={styles.scrollView}>
         {/* Profile Section */}
-        <View style={styles.profileSection}>
+        <View style={{
+          backgroundColor: darkMode ? "#1c1c1e" : 'white',
+          marginHorizontal: 20,
+          borderRadius: 20,
+          padding: 20,
+          marginBottom: 20,
+          shadowColor: '#000',
+          shadowOffset: { width: 0, height: 2 },
+          shadowOpacity: 0.1,
+          shadowRadius: 8,
+          elevation: 5,
+          alignItems: 'center',
+        }}>
           <View style={styles.profileImageContainer}>
-            <Image source={{ uri: userData.profileImage }} style={styles.profileImage} />
-            <TouchableOpacity 
+            <Image source={require('./../../assets/images/Welcoming.png')} style={styles.profileImage} />
+            <TouchableOpacity
               style={styles.editImageButton}
               onPress={() => handleMenuPress('Change Photo')}
             >
@@ -101,38 +166,35 @@ const ProfileScreen = () => {
               </View>
             )}
           </View>
-          
-          <Text style={[styles.userName, darkMode && styles.textDark]}>{userData.name}</Text>
-          <Text style={[styles.userBio, darkMode && styles.subtitleDark]}>{userData.bio}</Text>
-          <Text style={[styles.joinDate, darkMode && styles.subtitleDark]}>{userData.joinDate}</Text>
+
+          <Text style={[styles.userName, darkMode && styles.textDark]}>Hi, {userDetail?.name}</Text>
+          <Text style={[styles.joinDate, darkMode && styles.subtitleDark]}>{userDetail?.uid}</Text>
 
           {/* Stats Row */}
           <View style={styles.statsContainer}>
-            <StatCard label="Courses" value={userData.stats.projects} unit="" />
-            <StatCard label="Followers" value={userData.stats.followers} unit="K" />
-            <StatCard label="Following" value={userData.stats.following} unit="" />
+            <StatCard label="Courses Enrolled" value={courseList?.length} unit="" />
           </View>
         </View>
 
         {/* Quick Actions */}
-        <View style={[styles.section, darkMode && styles.sectionDark]}>
+        {/* <View style={[styles.section, darkMode && styles.sectionDark]}>
           <Text style={[styles.sectionTitle, darkMode && styles.textDark]}>Quick Actions</Text>
           <View style={styles.quickActionsContainer}>
-            <TouchableOpacity 
+            <TouchableOpacity
               style={[styles.quickActionBtn, { backgroundColor: '#4285F4' }]}
               onPress={() => handleMenuPress('Edit Profile')}
             >
               <Feather name="edit-2" size={20} color="white" />
               <Text style={styles.quickActionText}>Edit Profile</Text>
             </TouchableOpacity>
-            <TouchableOpacity 
+            <TouchableOpacity
               style={[styles.quickActionBtn, { backgroundColor: '#34A853' }]}
               onPress={() => handleMenuPress('Share Profile')}
             >
               <Feather name="share-2" size={20} color="white" />
               <Text style={styles.quickActionText}>Share</Text>
             </TouchableOpacity>
-            <TouchableOpacity 
+            <TouchableOpacity
               style={[styles.quickActionBtn, { backgroundColor: '#FF6B6B' }]}
               onPress={() => handleMenuPress('QR Code')}
             >
@@ -140,115 +202,47 @@ const ProfileScreen = () => {
               <Text style={styles.quickActionText}>QR Code</Text>
             </TouchableOpacity>
           </View>
-        </View>
+        </View> */}
 
         {/* Account Settings */}
         <View style={[styles.section, darkMode && styles.sectionDark]}>
           <Text style={[styles.sectionTitle, darkMode && styles.textDark]}>Account Settings</Text>
           <MenuCard
-            icon="user"
-            title="Personal Information"
-            subtitle="Update your personal details"
-            onPress={() => handleMenuPress('Personal Info')}
+            icon="plus"
+            title="Add New Course"
+            subtitle="Enroll New Courses"
+            onPress={() => route.push('/addCourse')}
             color="#4285F4"
           />
           <MenuCard
-            icon="mail"
-            title="Email & Phone"
-            subtitle="Manage contact information"
-            onPress={() => handleMenuPress('Contact Info')}
+            icon="book"
+            title="My Courses"
+            subtitle="Continue Your Learning Progress"
+            onPress={() => route.push('/home')}
             color="#34A853"
           />
           <MenuCard
-            icon="lock"
-            title="Password & Security"
-            subtitle="Change password, enable 2FA"
-            onPress={() => handleMenuPress('Security')}
+            icon="bar-chart"
+            title="My Progress"
+            subtitle="See and Evaluate Your Learning Progress"
+            onPress={() => route.push('/progress')}
             color="#FF6B6B"
           />
-          <MenuCard
-            icon="credit-card"
-            title="Payment Methods"
-            subtitle="Manage cards and billing"
-            onPress={() => handleMenuPress('Payment')}
-            color="#FF9500"
-          />
         </View>
 
-        {/* Privacy & Preferences */}
-        <View style={[styles.section, darkMode && styles.sectionDark]}>
-          <Text style={[styles.sectionTitle, darkMode && styles.textDark]}>Privacy & Preferences</Text>
-          <MenuCard
-            icon="shield"
-            title="Privacy Settings"
-            subtitle="Control who can see your info"
-            onPress={() => handleMenuPress('Privacy')}
-            color="#8E44AD"
-          />
-          <MenuCard
-            icon="bell"
-            title="Notifications"
-            subtitle="Customize notification preferences"
-            onPress={() => handleMenuPress('Notifications')}
-            color="#E67E22"
-          />
-          <MenuCard
-            icon="globe"
-            title="Language & Region"
-            subtitle="Change app language and location"
-            onPress={() => handleMenuPress('Language')}
-            color="#16A085"
-          />
-          <MenuCard
-            icon="download"
-            title="Data & Storage"
-            subtitle="Manage downloaded content"
-            onPress={() => handleMenuPress('Storage')}
-            color="#2ECC71"
-          />
-        </View>
-
-        {/* Support & Legal */}
-        <View style={[styles.section, darkMode && styles.sectionDark]}>
-          <Text style={[styles.sectionTitle, darkMode && styles.textDark]}>Support & Legal</Text>
-          <MenuCard
-            icon="help-circle"
-            title="Help & Support"
-            subtitle="Get help and contact support"
-            onPress={() => handleMenuPress('Help')}
-            color="#3498DB"
-          />
-          <MenuCard
-            icon="file-text"
-            title="Terms & Privacy Policy"
-            subtitle="Read our terms and policies"
-            onPress={() => handleMenuPress('Terms')}
-            color="#95A5A6"
-          />
-          <MenuCard
-            icon="star"
-            title="Rate Our App"
-            subtitle="Share your feedback"
-            onPress={() => handleMenuPress('Rate')}
-            color="#F39C12"
-          />
-          <MenuCard
-            icon="info"
-            title="About"
-            subtitle="App version and information"
-            onPress={() => handleMenuPress('About')}
-            color="#34495E"
-          />
-        </View>
-
-        {/* Logout Section */}
-        <TouchableOpacity 
+        {/* Log Out Button */}
+        <TouchableOpacity
           style={[styles.logoutButton, darkMode && styles.logoutButtonDark]}
-          onPress={() => handleMenuPress('Logout')}
+          onPress={() => setModalVisible(true)}
         >
           <Feather name="log-out" size={20} color="#FF3B30" />
           <Text style={styles.logoutText}>Sign Out</Text>
         </TouchableOpacity>
+        <LogoutConfirmationModal
+          visible={modalVisible}
+          onCancel={() => setModalVisible(false)}
+          onConfirm={onSignOut}
+        />
 
         <View style={styles.bottomSpacing} />
       </ScrollView>
@@ -284,19 +278,6 @@ const styles = StyleSheet.create({
   scrollView: {
     flex: 1,
     marginTop: -20,
-  },
-  profileSection: {
-    backgroundColor: 'white',
-    marginHorizontal: 20,
-    borderRadius: 20,
-    padding: 20,
-    marginBottom: 20,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 8,
-    elevation: 5,
-    alignItems: 'center',
   },
   profileImageContainer: {
     position: 'relative',

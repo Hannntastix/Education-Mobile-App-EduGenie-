@@ -240,7 +240,7 @@ export default function Progress() {
       <Text style={styles.emptySubtitle}>
         Start your learning journey by creating your first course!
       </Text>
-      <TouchableOpacity style={styles.createCourseButton}>
+      <TouchableOpacity style={styles.createCourseButton} onPress={() => router.push("/addCourse")}>
         <Ionicons name="add" size={24} color="#fff" />
         <Text style={styles.createCourseButtonText}>Create Course</Text>
       </TouchableOpacity>

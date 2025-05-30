@@ -31,7 +31,7 @@ export default function Header() {
                     color: Colors.GRAY,
                 }}>Let's Make Great Journey!</Text>
             </View>
-            <TouchableOpacity style={{
+            {/* <TouchableOpacity style={{
                 backgroundColor: Colors.LIGHT_GRAY,
                 padding: 10,
                 borderRadius: 12,
@@ -42,7 +42,7 @@ export default function Header() {
                 shadowRadius: 3,
             }}>
                 <Ionicons name="settings-outline" size={24} color="black" />
-            </TouchableOpacity>
+            </TouchableOpacity> */}
         </View>
     )
 }

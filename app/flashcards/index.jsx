@@ -93,9 +93,9 @@ export default function FlashCards() {
                         </Text>
                     </View>
 
-                    <Pressable style={styles.menuButton}>
+                    {/* <Pressable style={styles.menuButton}>
                         <Ionicons name="ellipsis-vertical" size={24} color="white" />
-                    </Pressable>
+                    </Pressable> */}
                 </View>
 
                 {/* Progress Bar with Animation */}

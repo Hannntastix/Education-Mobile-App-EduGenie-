@@ -1,5 +1,15 @@
-import { View, Text, TextInput, StyleSheet, Platform, Pressable, ScrollView } from 'react-native'
-import React, { useContext, useState } from 'react'
+import {
+  View,
+  Text,
+  TextInput,
+  StyleSheet,
+  Pressable,
+  ScrollView,
+  Animated,
+  Alert,
+  Dimensions
+} from 'react-native'
+import React, { useContext, useState, useRef, useEffect } from 'react'
 import Colors from '../../constant/Colors'
 import Button from '../../components/Shared/Button'
 import { GenerateCourseAIModel, GenerateTopicsAIModel } from '../../config/AiModel'
@@ -9,23 +19,62 @@ import { auth, db } from '../../config/firebaseConfig'
 import { UserDetailContext } from '../../context/UserDetailContext'
 import { useRouter } from 'expo-router'
 import { Ionicons } from '@expo/vector-icons'
+import { LinearGradient } from 'expo-linear-gradient'
+
+const { width } = Dimensions.get('window');
 
 export default function AddCourse() {
   const [loading, setLoading] = useState(false);
-  const [userInput, setUserInput] = useState();
+  const [userInput, setUserInput] = useState('');
   const [topics, setTopics] = useState([]);
   const [selectedTopics, setselectedTopics] = useState([]);
   const { userDetail, setUserDetail } = useContext(UserDetailContext);
 
   const router = useRouter();
+  const fadeAnim = useRef(new Animated.Value(0)).current;
+  const slideAnim = useRef(new Animated.Value(50)).current;
+
+  useEffect(() => {
+    Animated.parallel([
+      Animated.timing(fadeAnim, {
+        toValue: 1,
+        duration: 800,
+        useNativeDriver: true,
+      }),
+      Animated.timing(slideAnim, {
+        toValue: 0,
+        duration: 800,
+        useNativeDriver: true,
+      }),
+    ]).start();
+  }, []);
 
   const onGenerateTopic = async () => {
-    setLoading(true)
-    const PROMPT = userInput + Prompt.IDEA;
-    const aiResp = await GenerateTopicsAIModel.sendMessage(PROMPT)
-    const topicIdea = JSON.parse(aiResp.response.text());
-    console.log(topicIdea);
-    setTopics(topicIdea?.course_titles);
+    if (!userInput.trim()) {
+      Alert.alert('Error', 'Please enter what you want to learn');
+      return;
+    }
+
+    setLoading(true);
+    try {
+      const PROMPT = userInput + Prompt.IDEA;
+      const aiResp = await GenerateTopicsAIModel.sendMessage(PROMPT);
+      const topicIdea = JSON.parse(aiResp.response.text());
+      console.log(topicIdea);
+      setTopics(topicIdea?.course_titles || []);
+      setselectedTopics([])
+
+      // Animate topics appearance
+      Animated.timing(fadeAnim, {
+        toValue: 1,
+        duration: 500,
+        useNativeDriver: true,
+      }).start();
+
+    } catch (error) {
+      Alert.alert('Error', 'Failed to generate topics. Please try again.');
+      console.error(error);
+    }
     setLoading(false);
   }
 
@@ -33,8 +82,7 @@ export default function AddCourse() {
     const isAlreadyExist = selectedTopics.find((item) => item == topic)
     if (!isAlreadyExist) {
       setselectedTopics(prev => [...prev, topic])
-    }
-    else {
+    } else {
       const topics = selectedTopics.filter(item => item !== topic);
       setselectedTopics(topics);
     }
@@ -46,171 +94,340 @@ export default function AddCourse() {
   }
 
   const onGenerateCourse = async () => {
-    setLoading(true);
+    if (selectedTopics.length === 0) {
+      Alert.alert('Error', 'Please select at least one topic');
+      return;
+    }
 
+    setLoading(true);
     const PROMPT = selectedTopics + Prompt.COURSE;
+
     try {
       const aiResp = await GenerateCourseAIModel.sendMessage(PROMPT);
       const resp = JSON.parse(aiResp.response.text());
       const courses = resp.courses;
 
-      courses?.forEach(async (course) => {
-        const docId = Date.now().toString()
-        await setDoc(doc(db, 'courses', docId), {
+      const savePromises = courses?.map(async (course) => {
+        const docId = Date.now().toString() + Math.random().toString(36).substr(2, 9);
+        return await setDoc(doc(db, 'courses', docId), {
           ...course,
           createdOn: new Date(),
           createdBy: userDetail?.email,
           docId: docId
-        })
-      })
+        });
+      });
+
+      await Promise.all(savePromises);
+
       router.push('/(tabs)/home');
-      setLoading(false);
-    }
-    catch (e) {
-      setLoading(false);
-    }
 
-
+    } catch (error) {
+      Alert.alert('Error', 'Failed to generate course. Please try again.');
+      console.error(error);
+    }
+    setLoading(false);
   }
+
   return (
-    <ScrollView style={styles.container}>
-      <View>
-        <View style={{
-          display: 'flex',
-          flexDirection: 'row',
-          alignItems: 'center'
-        }}>
-          <Pressable onPress={() => router.back()} style={styles.backButton}>
-            <Ionicons name="arrow-back" size={24} color="black" />
-          </Pressable>
-          <View>
-            <Text style={styles.title}>Create New Course</Text>
-            <Text style={styles.subtitle}>What do you want to learn today?</Text>
+    <LinearGradient
+      colors={['#f8f9ff', '#ffffff']}
+      style={styles.gradient}
+    >
+      <ScrollView
+        style={styles.container}
+        showsVerticalScrollIndicator={false}
+        contentContainerStyle={styles.scrollContent}
+      >
+        <Animated.View
+          style={[
+            styles.content,
+            {
+              opacity: fadeAnim,
+              transform: [{ translateY: slideAnim }]
+            }
+          ]}
+        >
+          {/* Header */}
+          <View style={styles.header}>
+            <Pressable onPress={() => router.back()} style={styles.backButton}>
+              <Ionicons name="arrow-back" size={24} color={Colors.PRIMARY} />
+            </Pressable>
+            <View style={styles.headerText}>
+              <Text style={styles.title}>Create New Course</Text>
+              <Text style={styles.subtitle}>What do you want to learn today?</Text>
+            </View>
           </View>
-        </View>
-      </View>
 
-      <Text style={styles.label}>What course you want to create?</Text>
-      <TextInput
-        style={styles.textInput}
-        placeholder='Ex. Learn Python, Digital Marketing, 10th Grade Science...'
-        placeholderTextColor={Colors.GRAY}
-        onChangeText={(value) => setUserInput(value)}
-      />
+          {/* Input Section */}
+          <View style={styles.inputSection}>
+            <View style={styles.labelContainer}>
+              <Ionicons name="bulb-outline" size={20} color={Colors.PRIMARY} />
+              <Text style={styles.label}>What course do you want to create?</Text>
+            </View>
 
-      <Button
-        text={'Generate Topic'}
-        type='outline'
-        onPress={onGenerateTopic}
-        loading={loading}
-      />
+            <View style={styles.inputContainer}>
+              <TextInput
+                style={styles.textInput}
+                placeholder='Ex. Learn Python, Digital Marketing, 10th Grade Science...'
+                placeholderTextColor={Colors.GRAY}
+                value={userInput}
+                onChangeText={(value) => setUserInput(value)}
+                multiline={true}
+                numberOfLines={3}
+              />
+            </View>
 
-      {topics.length > 0 && (
-        <View style={{ marginTop: 15 }}>
-          <Text style={styles.label}>Select All Topics which you want to add</Text>
-
-          <View style={styles.topicContainer}>
-            {topics.map((item, index) => (
-              <Pressable
-                key={index}
-                onPress={() => onTopicSelect(item)}
-                style={[
-                  styles.topicChip,
-                  isTopicSelected(item) && styles.topicChipSelected
-                ]}
-              >
-                <Text style={[
-                  styles.topicText,
-                  isTopicSelected(item) && styles.topicTextSelected
-                ]}>
-                  {item}
-                </Text>
-              </Pressable>
-            ))}
+            <Button
+              text={loading ? 'Generating Topics...' : 'Generate Topics'}
+              type='primary'
+              onPress={onGenerateTopic}
+              loading={loading}
+              style={styles.generateButton}
+            />
           </View>
-        </View>
-      )}
 
-      {selectedTopics?.length > 0 && <Button text="Generate Course"
-        onPress={() => onGenerateCourse()}
-        loading={loading}
-      />}
-    </ScrollView>
+          {/* Topics Section */}
+          {topics.length > 0 && (
+            <Animated.View
+              style={[styles.topicsSection, { opacity: fadeAnim }]}
+            >
+              <View style={styles.labelContainer}>
+                <Ionicons name="list-outline" size={20} color={Colors.PRIMARY} />
+                <Text style={styles.label}>Select topics you want to include</Text>
+              </View>
+
+              <Text style={styles.helperText}>
+                Choose the topics that interest you most. You can select multiple topics.
+              </Text>
+
+              <View style={styles.topicContainer}>
+                {topics.map((item, index) => (
+                  <Pressable
+                    key={index}
+                    onPress={() => onTopicSelect(item)}
+                    style={[
+                      styles.topicChip,
+                      isTopicSelected(item) && styles.topicChipSelected
+                    ]}
+                    android_ripple={{ color: 'rgba(103, 126, 234, 0.1)' }}
+                  >
+                    <Text style={[
+                      styles.topicText,
+                      isTopicSelected(item) && styles.topicTextSelected
+                    ]}>
+                      {item}
+                    </Text>
+                    {isTopicSelected(item) && (
+                      <Ionicons
+                        name="checkmark-circle"
+                        size={16}
+                        color="white"
+                        style={styles.checkIcon}
+                      />
+                    )}
+                  </Pressable>
+                ))}
+              </View>
+
+              {/* Selected Topics Summary */}
+              {selectedTopics.length > 0 && (
+                <View style={styles.summaryContainer}>
+                  <Text style={styles.summaryText}>
+                    {selectedTopics.length} topic{selectedTopics.length > 1 ? 's' : ''} selected
+                  </Text>
+                </View>
+              )}
+            </Animated.View>
+          )}
+
+          {/* Generate Course Button */}
+          {selectedTopics?.length > 0 && (
+            <Animated.View
+              style={[styles.finalButtonContainer, { opacity: fadeAnim }]}
+            >
+              <Button
+                text={loading ? 'Creating Your Course...' : 'Create Course'}
+                onPress={onGenerateCourse}
+                loading={loading}
+                style={styles.finalButton}
+                icon="rocket-outline"
+              />
+            </Animated.View>
+          )}
+        </Animated.View>
+      </ScrollView>
+    </LinearGradient>
   )
 }
 
 const styles = StyleSheet.create({
+  gradient: {
+    flex: 1,
+  },
   container: {
     flex: 1,
-    backgroundColor: Colors.WHITE,
-    padding: 24,
-    paddingTop: 50,
-    gap: 16,
+  },
+  scrollContent: {
+    paddingBottom: 30,
+  },
+  content: {
+    padding: 20,
+    paddingTop: 60,
+  },
+  header: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 30,
   },
   backButton: {
-    width: 44,
-    height: 44,
-    borderRadius: 22,
-    backgroundColor: 'rgba(255,255,255,0.2)',
+    width: 48,
+    height: 48,
+    borderRadius: 24,
+    backgroundColor: 'rgba(103, 126, 234, 0.1)',
     justifyContent: 'center',
     alignItems: 'center',
+    marginRight: 15,
+  },
+  headerText: {
+    flex: 1,
   },
   title: {
-    fontSize: 24,
+    fontSize: 28,
     fontFamily: 'outfit-bold',
     color: Colors.PRIMARY,
+    marginBottom: 5,
   },
   subtitle: {
     fontSize: 16,
     fontFamily: 'outfit',
-    color: Colors.DARK,
-    marginBottom: 10,
+    color: Colors.GRAY,
+  },
+  inputSection: {
+    backgroundColor: 'white',
+    borderRadius: 20,
+    padding: 20,
+    marginBottom: 20,
+    shadowColor: '#000',
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.05,
+    shadowRadius: 10,
+    elevation: 3,
+  },
+  labelContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 15,
   },
   label: {
-    fontSize: 14,
+    fontSize: 16,
     fontFamily: 'outfit-bold',
     color: Colors.DARK,
-    marginTop: 10,
+    marginLeft: 8,
+  },
+  inputContainer: {
+    marginBottom: 20,
   },
   textInput: {
-    height: 50,
-    borderWidth: 1,
+    minHeight: 80,
+    borderWidth: 2,
     borderColor: Colors.LIGHT_GRAY,
-    borderRadius: 12,
+    borderRadius: 15,
     paddingHorizontal: 16,
+    paddingVertical: 12,
     fontFamily: 'outfit',
-    fontSize: 14,
+    fontSize: 16,
     color: Colors.DARK,
-    backgroundColor: Colors.LIGHT_GRAY,
+    backgroundColor: '#f8f9ff',
+    textAlignVertical: 'top',
+  },
+  generateButton: {
+    borderRadius: 15,
+    paddingVertical: 15,
+  },
+  topicsSection: {
+    backgroundColor: 'white',
+    borderRadius: 20,
+    padding: 20,
+    marginBottom: 20,
+    shadowColor: '#000',
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.05,
+    shadowRadius: 10,
+    elevation: 3,
+  },
+  helperText: {
+    fontSize: 14,
+    fontFamily: 'outfit',
+    color: Colors.GRAY,
+    marginBottom: 15,
+    lineHeight: 20,
   },
   topicContainer: {
     flexDirection: 'row',
     flexWrap: 'wrap',
-    gap: 8,
+    gap: 10,
     marginTop: 10,
   },
-
   topicChip: {
-    paddingHorizontal: 12,
-    paddingVertical: 8,
-    borderRadius: 20,
-    borderWidth: 1,
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    borderRadius: 25,
+    borderWidth: 2,
     borderColor: Colors.PRIMARY,
+    backgroundColor: 'white',
+    flexDirection: 'row',
+    alignItems: 'center',
     marginBottom: 8,
-    backgroundColor: Colors.WHITE,
+    minWidth: 80,
+    shadowColor: '#000',
+    shadowOffset: {
+      width: 0,
+      height: 1,
+    },
+    shadowOpacity: 0.1,
+    shadowRadius: 3,
+    elevation: 2,
   },
-
   topicChipSelected: {
     backgroundColor: Colors.PRIMARY,
+    borderColor: Colors.PRIMARY,
   },
-
   topicText: {
     color: Colors.PRIMARY,
-    fontFamily: 'outfit',
+    fontFamily: 'outfit-medium',
     fontSize: 14,
+    flex: 1,
   },
-
   topicTextSelected: {
-    color: Colors.WHITE,
+    color: 'white',
   },
-})
+  checkIcon: {
+    marginLeft: 6,
+  },
+  summaryContainer: {
+    marginTop: 15,
+    padding: 12,
+    backgroundColor: '#f0f4ff',
+    borderRadius: 10,
+    alignItems: 'center',
+  },
+  summaryText: {
+    fontSize: 14,
+    fontFamily: 'outfit-medium',
+    color: Colors.PRIMARY,
+  },
+  finalButtonContainer: {
+    marginTop: 10,
+  },
+  finalButton: {
+    borderRadius: 15,
+    paddingVertical: 18,
+    backgroundColor: '#4CAF50',
+  },
+});

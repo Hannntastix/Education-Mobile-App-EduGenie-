@@ -80,7 +80,7 @@ export default function WelcomeScreen() {
           shadowOffset: { width: 0, height: 2 },
           elevation: 5,
         }}
-        onPress={() => router.push('/auth/signIn')}
+        onPress={() => router.push('/auth/signUp')}
       >
         <Text style={{ color: Colors.WHITE, fontSize: 18, fontFamily: "outfit-medium" }}>
           Get Started
@@ -98,7 +98,7 @@ export default function WelcomeScreen() {
           borderColor: Colors.PRIMARY,
           backgroundColor: Colors.WHITE,
         }}
-        onPress={() => router.push('/auth/signUp')}
+        onPress={() => router.push('/auth/signIn')}
       >
         <Text style={{ color: Colors.PRIMARY, fontSize: 18, fontFamily: "outfit-medium" }}>
           Already have an account?

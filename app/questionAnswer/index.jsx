@@ -14,7 +14,7 @@ export default function QuestionAnswer() {
     const [completedQuestions, setCompletedQuestions] = useState(new Set());
     const router = useRouter();
 
-    // Animations
+    
     const fadeAnim = useRef(new Animated.Value(0)).current;
     const slideAnim = useRef(new Animated.Value(50)).current;
     const headerAnim = useRef(new Animated.Value(0)).current;
