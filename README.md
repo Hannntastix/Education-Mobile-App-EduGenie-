@@ -1,50 +1,50 @@
-# Welcome to your Expo app 👋
+# 📚 EduGenie
 
-This is an [Expo](https://expo.dev) project created with [`create-expo-app`](https://www.npmjs.com/package/create-expo-app).
+EduGenie is a free AI-powered mobile application that generates personalized online courses complete with quizzes, flashcards, and a Q&A system. Built to make quality education accessible to everyone, EduGenie uses cutting-edge AI technology to dynamically generate learning materials based on user input.
 
-## Get started
+<div align="center">
+  <img src="/assets/images/home.png" width="250"/>
+  <img src="/assets/images/generate.png" width="250"/>
+  <img src="/assets/images/course.png" width="250"/>
+  <img src="/assets/images/study.png" width="250"/>
+  <img src="/assets/images/quiz.png" width="250"/>
+  <img src="/assets/images/summary.png" width="250"/>
+  <img src="/assets/images/flashcards.png" width="250"/>
+  <img src="/assets/images/q&a.png" width="250"/>
+  <img src="/assets/images/progress.png" width="250"/>
+  <img src="/assets/images/profile.png" width="250"/>
+</div>
 
-1. Install dependencies
+---
 
-   ```bash
-   npm install
-   ```
+## ✨ Features
 
-2. Start the app
+- ⚡ **AI-Generated Courses** — Create customized learning modules using Gemini API.
+- 🧠 **Flashcards** — Automatically generated flashcards to boost memory retention.
+- ❓ **Q&A Section** — Ask questions and get AI-generated answers instantly.
+- 📝 **Quizzes** — Test your knowledge with dynamically generated quizzes.
+- 🔒 **User Authentication** — Sign up and log in securely with Firebase Authentication.
+- ☁️ **Real-time Database** — Save progress and course data using Firebase.
+- 📱 **Cross-platform** — Built with React Native and Expo for both Android & iOS.
 
-   ```bash
-    npx expo start
-   ```
+---
 
-In the output, you'll find options to open the app in a
+## 🛠️ Tech Stack
 
-- [development build](https://docs.expo.dev/develop/development-builds/introduction/)
-- [Android emulator](https://docs.expo.dev/workflow/android-studio-emulator/)
-- [iOS simulator](https://docs.expo.dev/workflow/ios-simulator/)
-- [Expo Go](https://expo.dev/go), a limited sandbox for trying out app development with Expo
+- **Frontend**: React Native + Expo  
+- **Backend**: Node.js + Express  
+- **AI Engine**: Gemini API (Google)  
+- **Authentication & DB**: Firebase (Firestore, Auth)  
+- **Hosting & Storage**: Firebase Hosting, Firebase Storage  
 
-You can start developing by editing the files inside the **app** directory. This project uses [file-based routing](https://docs.expo.dev/router/introduction).
+---
 
-## Get a fresh project
+## 📬 Contact
 
-When you're ready, run:
+Have questions, feedback, or ideas? Feel free to reach out:
 
-```bash
-npm run reset-project
-```
+- 📧 Email: [rehan121203@gmail.com](https://mail.google.com/mail/?view=cm&fs=1&to=rehan121203@gmail.com)
+- 💼 LinkedIn: [linkedin.com/in/mraihan-athalah](https://www.linkedin.com/in/mraihan-athalah/)
+- 🧑‍💻 GitHub: [github.com/Hannntastix](https://github.com/Hannntastix)
 
-This command will move the starter code to the **app-example** directory and create a blank **app** directory where you can start developing.
-
-## Learn more
-
-To learn more about developing your project with Expo, look at the following resources:
-
-- [Expo documentation](https://docs.expo.dev/): Learn fundamentals, or go into advanced topics with our [guides](https://docs.expo.dev/guides).
-- [Learn Expo tutorial](https://docs.expo.dev/tutorial/introduction/): Follow a step-by-step tutorial where you'll create a project that runs on Android, iOS, and the web.
-
-## Join the community
-
-Join our community of developers creating universal apps.
-
-- [Expo on GitHub](https://github.com/expo/expo): View our open source platform and contribute.
-- [Discord community](https://chat.expo.dev): Chat with Expo users and ask questions.
+We're always open to collaboration, contributions, and feature suggestions!

@@ -50,8 +50,7 @@ export default function ForgotPasswordScreen() {
         setIsLoading(true);
 
         try {
-            // 1. Cek apakah email ada di Firestore
-            const userDocRef = doc(db, "users", email); // asumsikan email jadi ID dokumen
+            const userDocRef = doc(db, "users", email);
             const userSnap = await getDoc(userDocRef);
 
             if (!userSnap.exists()) {
@@ -60,7 +59,6 @@ export default function ForgotPasswordScreen() {
                 return;
             }
 
-            // 2. Jika ada, kirim email reset password
             await sendPasswordResetEmail(auth, email);
             setEmailSent(true);
         } catch (error) {
