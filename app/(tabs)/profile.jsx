@@ -11,7 +11,7 @@ import {
   Alert,
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
-import { Feather, MaterialIcons, AntDesign, FontAwesome5 } from '@expo/vector-icons';
+import { Feather, MaterialIcons, AntDesign, FontAwesome5, Ionicons } from '@expo/vector-icons';
 import { UserDetailContext } from '../../context/UserDetailContext';
 import { collection, getDocs, query, where } from 'firebase/firestore';
 import { auth, db } from '../../config/firebaseConfig';
@@ -174,6 +174,11 @@ const ProfileScreen = () => {
           <View style={styles.statsContainer}>
             <StatCard label="Courses Enrolled" value={courseList?.length} unit="" />
           </View>
+
+          <TouchableOpacity style={styles.mentorButton} onPress={() => route.push('/applyMentor')}>
+            <FontAwesome5 name="chalkboard-teacher" size={24} color={Colors.PRIMARY} />
+            <Text style={styles.buttonText}>Apply as a mentor</Text>
+          </TouchableOpacity>
         </View>
 
         {/* Quick Actions */}
@@ -328,6 +333,28 @@ const styles = StyleSheet.create({
     fontSize: 12,
     color: '#BDC3C7',
     marginBottom: 20,
+  },
+  mentorButton: {
+    backgroundColor: Colors.WHITE,
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 20,
+    borderWidth: 2,
+    borderColor: Colors.PRIMARY,
+    paddingVertical: 14,
+    borderRadius: 12,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 6 },
+    shadowOpacity: 0.15,
+    gap: 8,
+    shadowRadius: 6,
+    marginTop: 5,
+    elevation: 4,
+  },
+  buttonText: {
+    fontFamily: 'outfit-bold',
+    fontSize: 16,
+    color: Colors.PRIMARY,
   },
   statsContainer: {
     flexDirection: 'row',
