@@ -15,7 +15,7 @@ export default function FlashCards() {
     const router = useRouter();
     const [currentPage, setCurrentPage] = useState(0);
     const [isFlipped, setIsFlipped] = useState(false);
-    const width = Dimensions.get('screen').width;
+    const { width } = Dimensions.get('window');
     const flatListRef = useRef(null);
     const scaleAnim = useRef(new Animated.Value(1)).current;
     const fadeAnim = useRef(new Animated.Value(1)).current;
@@ -38,9 +38,13 @@ export default function FlashCards() {
     // }, [currentPage]);
 
     const onscroll = (event) => {
-        const index = Math.round(event?.nativeEvent?.contentOffset.x / width)
+        const offsetX = event.nativeEvent.contentOffset.x;
+
+        const index = Math.round(offsetX / width);
+
         setCurrentPage(index);
     };
+    console.log(currentPage + 1);
 
     const GetProgress = (currentPage) => {
         const percentage = (currentPage + 1) / flashcard?.length;
@@ -88,18 +92,18 @@ export default function FlashCards() {
 
                     <View style={styles.headerCenter}>
                         <Text style={styles.courseTitle}>{course?.name || 'Flashcards'}</Text>
-                        <Text style={styles.progressText}>
+                        {/* <Text style={styles.progressText}>
                             {currentPage + 1} of {flashcard?.length}
-                        </Text>
+                        </Text> */}
                     </View>
 
-                    {/* <Pressable style={styles.menuButton}>
+                    <Pressable style={styles.menuButton}>
                         <Ionicons name="ellipsis-vertical" size={24} color="white" />
-                    </Pressable> */}
+                    </Pressable>
                 </View>
 
                 {/* Progress Bar with Animation */}
-                <View style={styles.progressWrapper}>
+                {/* <View style={styles.progressWrapper}>
                     <Progress.Bar
                         progress={GetProgress(currentPage)}
                         width={null}
@@ -117,53 +121,78 @@ export default function FlashCards() {
                 </View>
 
                 {/* Progress Dots */}
-                {renderProgressDots()}
+                {/* {renderProgressDots()}  */}
 
                 {/* Flash Cards */}
-                <Animated.View style={[styles.cardsContainer, { transform: [{ scale: scaleAnim }] }]}>
+                <Animated.View
+                    style={[
+                        styles.cardsContainer,
+                        {
+                            transform: [{ scale: scaleAnim }],
+                        },
+                    ]}
+                >
                     <FlatList
-                        ref={flatListRef}
                         data={flashcard}
-                        horizontal={true}
+                        horizontal
                         pagingEnabled
                         showsHorizontalScrollIndicator={false}
                         onScroll={onscroll}
-                        decelerationRate="fast"
-                        snapToInterval={width}
-                        snapToAlignment="center"
-                        renderItem={({ item, index }) => (
-                            <View style={[styles.cardWrapper, { width }]}>
+                        scrollEventThrottle={16}
+                        keyExtractor={(item, index) => index.toString()}
+
+                        renderItem={({ item }) => (
+                            <View style={styles.cardWrapper}>
                                 <FlipCard
                                     style={styles.flipCard}
                                     flipHorizontal={true}
                                     flipVertical={false}
                                     flip={isFlipped}
                                     clickable={true}
-                                    // onFlipEnd={(isFlipped) => setIsFlipped(isFlipped)}
                                 >
-                                    {/* Front Side */}
+                                    {/* Front */}
                                     <View style={styles.frontCard}>
                                         <View style={styles.cardIcon}>
-                                            <AntDesign name="codesquareo" size={24} color={Colors.PRIMARY} />
+                                            <AntDesign
+                                                name="codesquareo"
+                                                size={24}
+                                                color={Colors.PRIMARY}
+                                            />
                                         </View>
-                                        <Text style={styles.questionLabel}>Question</Text>
-                                        <Text style={styles.frontText}>{item?.front}</Text>
+
+                                        <Text style={styles.questionLabel}>
+                                            Question
+                                        </Text>
+
+                                        <Text style={styles.frontText}>
+                                            {item?.front}
+                                        </Text>
                                     </View>
 
-                                    {/* Back Side */}
+                                    {/* Back */}
                                     <View style={styles.backCard}>
                                         <View style={styles.cardIcon}>
-                                            <Ionicons name="checkmark-circle" size={40} color="white" />
+                                            <Ionicons
+                                                name="checkmark-circle"
+                                                size={40}
+                                                color="white"
+                                            />
                                         </View>
-                                        <Text style={styles.answerLabel}>Answer</Text>
-                                        <Text style={styles.backText}>{item?.back}</Text>
+
+                                        <Text style={styles.answerLabel}>
+                                            Answer
+                                        </Text>
+
+                                        <Text style={styles.backText}>
+                                            {item?.back}
+                                        </Text>
                                     </View>
                                 </FlipCard>
                             </View>
                         )}
-                        keyExtractor={(item, index) => index.toString()}
                     />
                 </Animated.View>
+
             </View>
         </View>
     )
@@ -267,17 +296,20 @@ const styles = StyleSheet.create({
     },
     cardsContainer: {
         flex: 1,
-        justifyContent: 'center',
     },
+
     cardWrapper: {
+        width: Dimensions.get('window'),
         justifyContent: 'center',
         alignItems: 'center',
         paddingHorizontal: 20,
     },
+
     flipCard: {
-        width: Dimensions.get('screen').width - 60,
+        width: Dimensions.get('window').width - 80,
         height: 400,
         borderRadius: 25,
+
         shadowColor: '#000',
         shadowOffset: {
             width: 0,
@@ -287,24 +319,41 @@ const styles = StyleSheet.create({
         shadowRadius: 15,
         elevation: 8,
     },
+
     frontCard: {
         flex: 1,
+        width: '100%',
         backgroundColor: 'white',
         borderRadius: 25,
         padding: 30,
         justifyContent: 'center',
         alignItems: 'center',
     },
+
     backCard: {
         flex: 1,
+        width: '100%',
         backgroundColor: '#4A5568',
         borderRadius: 25,
         padding: 30,
         justifyContent: 'center',
         alignItems: 'center',
     },
+
     cardIcon: {
         marginBottom: 20,
+    },
+
+    frontText: {
+        width: '100%',
+        textAlign: 'center',
+        flexShrink: 1,
+    },
+
+    backText: {
+        width: '100%',
+        textAlign: 'center',
+        flexShrink: 1,
     },
     questionLabel: {
         fontFamily: 'outfit-bold',

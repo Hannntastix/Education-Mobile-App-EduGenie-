@@ -11,6 +11,7 @@ import {
     Dimensions,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import { useRouter } from 'expo-router';
 
 const { width, height } = Dimensions.get('window');
 
@@ -30,6 +31,8 @@ export default function ApplyMentorScreen() {
 
     const [selectedExpertise, setSelectedExpertise] = useState([]);
     const [currentStep, setCurrentStep] = useState(1);
+
+    const route = useRouter()
 
     const expertiseOptions = [
         'Programming', 'Design', 'Marketing', 'Business',
@@ -281,7 +284,7 @@ export default function ApplyMentorScreen() {
         <SafeAreaView style={styles.container}>
             {/* Header */}
             <View style={styles.header}>
-                <TouchableOpacity style={styles.backButton}>
+                <TouchableOpacity onPress={() => route.push('/(tabs)/profile')} style={styles.backButton}>
                     <Ionicons name="chevron-back" size={24} color="#2563EB" />
                 </TouchableOpacity>
                 <Text style={styles.headerTitle}>Mentor Application</Text>

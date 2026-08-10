@@ -28,6 +28,7 @@ const ProfileScreen = () => {
   const [courseList, setCourseList] = useState([]);
   const [loading, setLoading] = useState(false);
   const [modalVisible, setModalVisible] = useState(false);
+  const [isMember, setIsMember] = useState(false);
 
   const route = useRouter();
 
@@ -175,10 +176,34 @@ const ProfileScreen = () => {
             <StatCard label="Courses Enrolled" value={courseList?.length} unit="" />
           </View>
 
-          <TouchableOpacity style={styles.mentorButton} onPress={() => route.push('/applyMentor')}>
-            <FontAwesome5 name="chalkboard-teacher" size={24} color={Colors.PRIMARY} />
-            <Text style={styles.buttonText}>Apply as a mentor</Text>
-          </TouchableOpacity>
+          {isMember ? (
+            <View style={styles.mentorStatusContainer}>
+              <View style={styles.mentorBadge}>
+                <FontAwesome5 name="crown" size={20} color={Colors.PRIMARY} />
+                <Text style={styles.mentorStatusText}>You're Already a Mentor</Text>
+              </View>
+              <Text style={styles.mentorSubText}>
+                Thank you for being part of our mentor community! 🎓
+              </Text>
+            </View>
+          ) : (
+            <TouchableOpacity
+              style={styles.mentorButton}
+              onPress={() => route.push('/applyMentor')}
+              activeOpacity={0.8}
+            >
+              <View style={styles.mentorButtonContent}>
+                <View style={styles.iconContainer}>
+                  <FontAwesome5 name="chalkboard-teacher" size={24} color="white" />
+                </View>
+                <View style={styles.textContainer}>
+                  <Text style={styles.buttonTitle}>Apply as a Mentor</Text>
+                  <Text style={styles.buttonSubtitle}>Share your knowledge & inspire others</Text>
+                </View>
+              </View>
+            </TouchableOpacity>
+          )}
+
         </View>
 
         {/* Quick Actions */}
@@ -250,8 +275,8 @@ const ProfileScreen = () => {
         />
 
         <View style={styles.bottomSpacing} />
-      </ScrollView>
-    </View>
+      </ScrollView >
+    </View >
   );
 };
 
@@ -361,6 +386,107 @@ const styles = StyleSheet.create({
     justifyContent: 'space-around',
     width: '100%',
   },
+  mentorStatusContainer: {
+    backgroundColor: '#F0F9FF',
+    borderRadius: 16,
+    padding: 20,
+    marginVertical: 10,
+    borderWidth: 1,
+    borderColor: '#E0F2FE',
+    shadowColor: Colors.PRIMARY,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 8,
+    elevation: 3,
+  },
+  mentorBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: 'white',
+    paddingVertical: 12,
+    paddingHorizontal: 20,
+    borderRadius: 25,
+    marginBottom: 12,
+    borderWidth: 2,
+    borderColor: Colors.PRIMARY,
+    gap: 10,
+  },
+  mentorStatusText: {
+    fontFamily: 'outfit-bold',
+    color: Colors.PRIMARY,
+    fontSize: 18,
+    textAlign: 'center',
+  },
+  mentorSubText: {
+    fontFamily: 'outfit-medium',
+    color: '#0369A1',
+    fontSize: 14,
+    textAlign: 'center',
+    lineHeight: 20,
+  },
+
+  // Apply Mentor Button
+  mentorButton: {
+    backgroundColor: Colors.PRIMARY,
+    borderRadius: 16,
+    marginVertical: 10,
+    shadowColor: Colors.PRIMARY,
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 12,
+    elevation: 8,
+  },
+  mentorButtonContent: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    padding: 20,
+    gap: 16,
+  },
+  iconContainer: {
+    backgroundColor: 'rgba(255, 255, 255, 0.2)',
+    padding: 12,
+    borderRadius: 12,
+  },
+  textContainer: {
+    flex: 1,
+  },
+  buttonTitle: {
+    fontFamily: 'outfit-bold',
+    color: 'white',
+    fontSize: 18,
+    marginBottom: 4,
+  },
+  buttonSubtitle: {
+    fontFamily: 'outfit-regular',
+    color: 'rgba(255, 255, 255, 0.8)',
+    fontSize: 14,
+    lineHeight: 18,
+  },
+
+// // Alternative dengan gradient (jika ingin lebih menarik)
+// const gradientStyles = StyleSheet.create({
+//   mentorButton: {
+//     borderRadius: 16,
+//     marginVertical: 10,
+//     shadowColor: Colors.PRIMARY,
+//     shadowOffset: { width: 0, height: 4 },
+//     shadowOpacity: 0.3,
+//     shadowRadius: 12,
+//     elevation: 8,
+//   },
+//   gradientContainer: {
+//     borderRadius: 16,
+//     padding: 20,
+//   },
+  // Gunakan LinearGradient component:
+  // <LinearGradient
+  //   colors={[Colors.PRIMARY, '#1E40AF']}
+  //   style={gradientStyles.gradientContainer}
+  //   start={{ x: 0, y: 0 }}
+  //   end={{ x: 1, y: 1 }}
+  // >
+
   statCard: {
     alignItems: 'center',
     flex: 1,

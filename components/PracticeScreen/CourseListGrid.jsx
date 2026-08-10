@@ -12,6 +12,16 @@ export default function CourseListGrid({ courseList, option }) {
     const router = useRouter();
     const [expandedItem, setExpandedItem] = useState(null);
 
+    // PERBAIKAN AMBIL DATA DARI MENGGUNAKAN COURSEPARAMS KE DOCID
+    // const onPress = (course) => {
+    //     router.push({
+    //         pathname: option.path,
+    //         params: {
+    //             docId: course.docId
+    //         }
+    //     });
+    // };
+
     const onPress = (course) => {
         router.push({
             pathname: option.path,

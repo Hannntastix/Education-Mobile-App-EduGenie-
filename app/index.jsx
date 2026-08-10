@@ -8,10 +8,8 @@ import { useContext } from "react";
 import { UserDetailContext } from "@/context/UserDetailContext";
 
 export default function WelcomeScreen() {
-
   const router = useRouter();
   const { userDetail, setUserDetail } = useContext(UserDetailContext)
-
   onAuthStateChanged(auth, async (user) => {
     if (user) {
       console.log(user);
@@ -41,7 +39,7 @@ export default function WelcomeScreen() {
           marginBottom: 20,
         }}
       />
-
+      
       {/* Judul */}
       <Text
         style={{

@@ -8,18 +8,25 @@ import {
   Animated,
   Alert,
   Dimensions
-} from 'react-native'
-import React, { useContext, useState, useRef, useEffect } from 'react'
-import Colors from '../../constant/Colors'
-import Button from '../../components/Shared/Button'
-import { GenerateCourseAIModel, GenerateTopicsAIModel } from '../../config/AiModel'
-import Prompt from '../../constant/Prompt'
-import { doc, getDoc, setDoc } from 'firebase/firestore'
-import { auth, db } from '../../config/firebaseConfig'
-import { UserDetailContext } from '../../context/UserDetailContext'
-import { useRouter } from 'expo-router'
-import { Ionicons } from '@expo/vector-icons'
-import { LinearGradient } from 'expo-linear-gradient'
+} from 'react-native';
+import React, { useContext, useState, useRef, useEffect } from 'react';
+import Colors from '../../constant/Colors';
+import Button from '../../components/Shared/Button';
+import {
+  GenerateCourseAIModel,
+  GenerateTopicsAIModel
+} from '../../config/AiModel';
+import Prompt from '../../constant/Prompt';
+import {
+  collection,
+  doc,
+  setDoc
+} from 'firebase/firestore';
+import { auth, db } from '../../config/firebaseConfig';
+import { UserDetailContext } from '../../context/UserDetailContext';
+import { useRouter } from 'expo-router';
+import { Ionicons } from '@expo/vector-icons';
+import { LinearGradient } from 'expo-linear-gradient';
 
 const { width } = Dimensions.get('window');
 
@@ -28,9 +35,11 @@ export default function AddCourse() {
   const [userInput, setUserInput] = useState('');
   const [topics, setTopics] = useState([]);
   const [selectedTopics, setselectedTopics] = useState([]);
+
   const { userDetail, setUserDetail } = useContext(UserDetailContext);
 
   const router = useRouter();
+
   const fadeAnim = useRef(new Animated.Value(0)).current;
   const slideAnim = useRef(new Animated.Value(50)).current;
 
@@ -49,22 +58,32 @@ export default function AddCourse() {
     ]).start();
   }, []);
 
+  // GENERATE TOPICS
+
   const onGenerateTopic = async () => {
     if (!userInput.trim()) {
-      Alert.alert('Error', 'Please enter what you want to learn');
+      Alert.alert(
+        'Error',
+        'Please enter what you want to learn'
+      );
       return;
     }
 
     setLoading(true);
+
     try {
       const PROMPT = userInput + Prompt.IDEA;
-      const aiResp = await GenerateTopicsAIModel.sendMessage(PROMPT);
-      const topicIdea = JSON.parse(aiResp.response.text());
-      console.log(topicIdea);
-      setTopics(topicIdea?.course_titles || []);
-      setselectedTopics([])
 
-      // Animate topics appearance
+      const aiResp =
+        await GenerateTopicsAIModel.sendMessage(PROMPT);
+
+      const rawText = aiResp.response.text();
+
+      const topicIdea = JSON.parse(rawText);
+
+      setTopics(topicIdea?.course_titles || []);
+      setselectedTopics([]);
+
       Animated.timing(fadeAnim, {
         toValue: 1,
         duration: 500,
@@ -72,61 +91,172 @@ export default function AddCourse() {
       }).start();
 
     } catch (error) {
-      Alert.alert('Error', 'Failed to generate topics. Please try again.');
-      console.error(error);
+      console.error(
+        'ERROR GENERATING TOPICS:',
+        error
+      );
+
+      Alert.alert(
+        'Error',
+        error?.message ||
+        'Failed to generate topics. Please try again.'
+      );
+    } finally {
+      setLoading(false);
     }
-    setLoading(false);
-  }
+  };
+
+  // SELECT TOPIC
 
   const onTopicSelect = (topic) => {
-    const isAlreadyExist = selectedTopics.find((item) => item == topic)
+    const isAlreadyExist =
+      selectedTopics.find(
+        (item) => item === topic
+      );
+
     if (!isAlreadyExist) {
-      setselectedTopics(prev => [...prev, topic])
+      setselectedTopics((prev) => [
+        ...prev,
+        topic
+      ]);
     } else {
-      const topics = selectedTopics.filter(item => item !== topic);
+      const topics =
+        selectedTopics.filter(
+          (item) => item !== topic
+        );
+
       setselectedTopics(topics);
     }
-  }
+  };
 
   const isTopicSelected = (topic) => {
-    const selection = selectedTopics.find(item => item == topic);
-    return selection ? true : false
-  }
+    const selection =
+      selectedTopics.find(
+        (item) => item === topic
+      );
+
+    return selection ? true : false;
+  };
+
+  // GENERATE COURSE
 
   const onGenerateCourse = async () => {
     if (selectedTopics.length === 0) {
-      Alert.alert('Error', 'Please select at least one topic');
+      Alert.alert(
+        'Error',
+        'Please select at least one topic'
+      );
       return;
     }
 
     setLoading(true);
-    const PROMPT = selectedTopics + Prompt.COURSE;
 
     try {
-      const aiResp = await GenerateCourseAIModel.sendMessage(PROMPT);
-      const resp = JSON.parse(aiResp.response.text());
-      const courses = resp.courses;
+      // Convert array menjadi string 
+      const PROMPT =
+        selectedTopics.join(', ') +
+        Prompt.COURSE;
 
-      const savePromises = courses?.map(async (course) => {
-        const docId = Date.now().toString() + Math.random().toString(36).substr(2, 9);
-        return await setDoc(doc(db, 'courses', docId), {
-          ...course,
-          createdOn: new Date(),
-          createdBy: userDetail?.email,
-          docId: docId
+      // 1. REQUEST KE GEMINI
+
+      const aiResp =
+        await GenerateCourseAIModel.sendMessage(PROMPT);
+
+      const rawText =
+        aiResp.response.text();
+
+      console.log(rawText);
+
+      // 2. PARSE JSON
+
+      const resp = JSON.parse(rawText);
+
+      // 3. AMBIL ARRAY COURSES
+
+      const courses = resp?.courses;
+
+      if (!Array.isArray(courses)) {
+        throw new Error(
+          'Gemini response does not contain a valid courses array.'
+        );
+      }
+
+      if (courses.length === 0) {
+        throw new Error(
+          'Gemini returned an empty courses array.'
+        );
+      }
+
+      console.log(
+        'Number of generated courses:',
+        courses.length
+      );
+
+      // 4. SIMPAN SEMUA COURSE KE FIRESTORE
+
+      const savePromises =
+        courses.map(async (course, index) => {
+
+          // Membuat reference dengan ID otomatis Firestore
+          const courseRef =
+            doc(collection(db, 'courses'));
+
+          // Pastikan data course valid
+          if (!course?.courseTitle) {
+            throw new Error(
+              `Course ${index + 1} does not have courseTitle.`
+            );
+          }
+
+          // Simpan course
+          await setDoc(
+            courseRef,
+            {
+              ...course,
+
+              createdOn: new Date(),
+
+              createdBy:
+                userDetail?.email || null,
+
+              docId: courseRef.id
+            }
+          );
+
+          console.log(
+            `COURSE ${index + 1} SAVED SUCCESSFULLY`
+          );
+
+          return courseRef.id;
         });
-      });
 
-      await Promise.all(savePromises);
+      // Tunggu semua course selesai disimpan
+      const savedCourses =
+        await Promise.all(savePromises);
+
+      console.log(
+        'Saved Course IDs:',
+        savedCourses
+      );
+
+      // 5. PINDAH KE HOME
 
       router.push('/(tabs)/home');
 
     } catch (error) {
-      Alert.alert('Error', 'Failed to generate course. Please try again.');
+
       console.error(error);
+
+      Alert.alert(
+        'Error',
+        error?.message ||
+        'Failed to generate course. Please try again.'
+      );
+
+    } finally {
+      setLoading(false);
     }
-    setLoading(false);
-  }
+  };
 
   return (
     <LinearGradient
@@ -138,127 +268,239 @@ export default function AddCourse() {
         showsVerticalScrollIndicator={false}
         contentContainerStyle={styles.scrollContent}
       >
+
         <Animated.View
           style={[
             styles.content,
             {
               opacity: fadeAnim,
-              transform: [{ translateY: slideAnim }]
+              transform: [
+                {
+                  translateY: slideAnim
+                }
+              ]
             }
           ]}
         >
+
           {/* Header */}
+
           <View style={styles.header}>
-            <Pressable onPress={() => router.back()} style={styles.backButton}>
-              <Ionicons name="arrow-back" size={24} color={Colors.PRIMARY} />
+
+            <Pressable
+              onPress={() => router.push('/')}
+              style={styles.backButton}
+            >
+              <Ionicons
+                name="arrow-back"
+                size={24}
+                color={Colors.PRIMARY}
+              />
             </Pressable>
+
             <View style={styles.headerText}>
-              <Text style={styles.title}>Create New Course</Text>
-              <Text style={styles.subtitle}>What do you want to learn today?</Text>
+
+              <Text style={styles.title}>
+                Create New Course
+              </Text>
+
+              <Text style={styles.subtitle}>
+                What do you want to learn today?
+              </Text>
+
             </View>
+
           </View>
 
           {/* Input Section */}
+
           <View style={styles.inputSection}>
+
             <View style={styles.labelContainer}>
-              <Ionicons name="bulb-outline" size={20} color={Colors.PRIMARY} />
-              <Text style={styles.label}>What course do you want to create?</Text>
+
+              <Ionicons
+                name="bulb-outline"
+                size={20}
+                color={Colors.PRIMARY}
+              />
+
+              <Text style={styles.label}>
+                What course do you want to create?
+              </Text>
+
             </View>
 
             <View style={styles.inputContainer}>
+
               <TextInput
                 style={styles.textInput}
-                placeholder='Ex. Learn Python, Digital Marketing, 10th Grade Science...'
+                placeholder="Ex. Learn Python, Digital Marketing, 10th Grade Science..."
                 placeholderTextColor={Colors.GRAY}
                 value={userInput}
-                onChangeText={(value) => setUserInput(value)}
+                onChangeText={(value) =>
+                  setUserInput(value)
+                }
                 multiline={true}
                 numberOfLines={3}
               />
+
             </View>
 
             <Button
-              text={loading ? 'Generating Topics...' : 'Generate Topics'}
-              type='primary'
+              text={
+                loading
+                  ? 'Generating Topics...'
+                  : 'Generate Topics'
+              }
+              type="primary"
               onPress={onGenerateTopic}
               loading={loading}
               style={styles.generateButton}
             />
+
           </View>
 
           {/* Topics Section */}
+
           {topics.length > 0 && (
+
             <Animated.View
-              style={[styles.topicsSection, { opacity: fadeAnim }]}
+              style={[
+                styles.topicsSection,
+                {
+                  opacity: fadeAnim
+                }
+              ]}
             >
+
               <View style={styles.labelContainer}>
-                <Ionicons name="list-outline" size={20} color={Colors.PRIMARY} />
-                <Text style={styles.label}>Select topics you want to include</Text>
+
+                <Ionicons
+                  name="list-outline"
+                  size={20}
+                  color={Colors.PRIMARY}
+                />
+
+                <Text style={styles.label}>
+                  Select topics you want to include
+                </Text>
+
               </View>
 
               <Text style={styles.helperText}>
-                Choose the topics that interest you most. You can select multiple topics.
+                Choose the topics that interest you most.
+                You can select multiple topics.
               </Text>
 
               <View style={styles.topicContainer}>
+
                 {topics.map((item, index) => (
+
                   <Pressable
                     key={index}
-                    onPress={() => onTopicSelect(item)}
+                    onPress={() =>
+                      onTopicSelect(item)
+                    }
                     style={[
                       styles.topicChip,
-                      isTopicSelected(item) && styles.topicChipSelected
+                      isTopicSelected(item) &&
+                      styles.topicChipSelected
                     ]}
-                    android_ripple={{ color: 'rgba(103, 126, 234, 0.1)' }}
+                    android_ripple={{
+                      color:
+                        'rgba(103, 126, 234, 0.1)'
+                    }}
                   >
-                    <Text style={[
-                      styles.topicText,
-                      isTopicSelected(item) && styles.topicTextSelected
-                    ]}>
+
+                    <Text
+                      style={[
+                        styles.topicText,
+                        isTopicSelected(item) &&
+                        styles.topicTextSelected
+                      ]}
+                    >
                       {item}
                     </Text>
+
                     {isTopicSelected(item) && (
+
                       <Ionicons
                         name="checkmark-circle"
                         size={16}
                         color="white"
                         style={styles.checkIcon}
                       />
+
                     )}
+
                   </Pressable>
+
                 ))}
+
               </View>
 
               {/* Selected Topics Summary */}
+
               {selectedTopics.length > 0 && (
+
                 <View style={styles.summaryContainer}>
+
                   <Text style={styles.summaryText}>
-                    {selectedTopics.length} topic{selectedTopics.length > 1 ? 's' : ''} selected
+
+                    {selectedTopics.length}{' '}
+                    topic
+                    {selectedTopics.length > 1
+                      ? 's'
+                      : ''}{' '}
+                    selected
+
                   </Text>
+
                 </View>
+
               )}
+
             </Animated.View>
+
           )}
 
           {/* Generate Course Button */}
-          {selectedTopics?.length > 0 && (
+
+          {selectedTopics.length > 0 && (
+
             <Animated.View
-              style={[styles.finalButtonContainer, { opacity: fadeAnim }]}
+              style={[
+                styles.finalButtonContainer,
+                {
+                  opacity: fadeAnim
+                }
+              ]}
             >
+
               <Button
-                text={loading ? 'Creating Your Course...' : 'Create Course'}
+                text={
+                  loading
+                    ? 'Creating Your Course...'
+                    : 'Create Course'
+                }
                 onPress={onGenerateCourse}
                 loading={loading}
                 style={styles.finalButton}
                 icon="rocket-outline"
               />
+
             </Animated.View>
+
           )}
+
         </Animated.View>
+
       </ScrollView>
     </LinearGradient>
-  )
+  );
 }
+
+
 
 const styles = StyleSheet.create({
   gradient: {

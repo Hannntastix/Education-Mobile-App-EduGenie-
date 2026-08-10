@@ -8,6 +8,10 @@ import { db } from './../../config/firebaseConfig'
 import { doc, updateDoc } from 'firebase/firestore'
 
 export default function Quiz() {
+    // const { docId } = useLocalSearchParams();
+
+    // const [course, setCourse] = useState(null);
+    // const [loadingCourse, setLoadingCourse] = useState(true);
     const { courseParams } = useLocalSearchParams();
     const course = JSON.parse(courseParams);
     const [currentQuestion, setCurrentQuestion] = useState(0);
@@ -24,6 +28,39 @@ export default function Quiz() {
         }
     }, [currentQuestion]);
 
+    // PERBAIKAN AMBIL DATA DARI MENGGUNAKAN COURSEPARAMS KE DOCID
+    // const GetCourseById = async () => {
+    //     try {
+    //         const docRef = doc(db, 'courses', docId);
+    //         const docSnap = await getDoc(docRef);
+
+    //         if (docSnap.exists()) {
+    //             setCourse(docSnap.data());
+    //         }
+    //     } catch (e) {
+    //         console.log(e);
+    //     } finally {
+    //         setLoadingCourse(false);
+    //     }
+    // };
+
+    // useEffect(() => {
+    //     GetCourseById();
+    // }, []);
+
+    // if (loadingCourse) {
+    //     return (
+    //         <View
+    //             style={{
+    //                 flex: 1,
+    //                 justifyContent: 'center',
+    //                 alignItems: 'center'
+    //             }}
+    //         >
+    //             <ActivityIndicator size="large" />
+    //         </View>
+    //     );
+    // }
 
     const quiz = course?.quiz;
 

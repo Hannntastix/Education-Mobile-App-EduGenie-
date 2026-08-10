@@ -26,7 +26,7 @@ export default function SignIn() {
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
     const [secureTextEntry, setSecureTextEntry] = useState(true);
-    const { userDetail, setUserDetail } = useContext(UserDetailContext)
+    const { userDetail, setUserDetail } = useContext(UserDetailContext);
     const [loading, setIsLoading] = useState(false);
     const [modalVisible, setModalVisible] = useState(false);
 
