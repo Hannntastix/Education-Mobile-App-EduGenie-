@@ -16,37 +16,38 @@ function createChatModel(initialHistory = []) {
 
   return {
     async sendMessage(message) {
-
       history.push({
         role: 'user',
-        parts: [
-          {
-            text: message,
-          },
-        ],
+        parts: [{ text: message }],
       });
 
-      const response =
-        await ai.models.generateContent({
-          model: MODEL,
-          config: CONFIG,
-          contents: history,
-        });
+      const response = await ai.models.generateContent({
+        model: MODEL,
+        config: CONFIG,
+        contents: history,
+      });
 
       const text = response.text;
 
       history.push({
         role: 'model',
-        parts: [
-          {
-            text,
-          },
-        ],
+        parts: [{ text }],
       });
+
+      // console.log("========== GEMINI USAGE ==========");
+      // console.log("Input Tokens:", response.usageMetadata?.promptTokenCount);
+      // console.log("Output Tokens:", response.usageMetadata?.candidatesTokenCount);
+      // console.log("Total Tokens:", response.usageMetadata?.totalTokenCount);
+      // console.log("==================================");
 
       return {
         response: {
           text: () => text,
+        },
+        usage: {
+          inputTokens: response.usageMetadata?.promptTokenCount ?? 0,
+          outputTokens: response.usageMetadata?.candidatesTokenCount ?? 0,
+          totalTokens: response.usageMetadata?.totalTokenCount ?? 0,
         },
       };
     },

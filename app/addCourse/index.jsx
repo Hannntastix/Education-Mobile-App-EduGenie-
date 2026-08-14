@@ -74,12 +74,25 @@ export default function AddCourse() {
     try {
       const PROMPT = userInput + Prompt.IDEA;
 
+      const startTime = performance.now();
+
       const aiResp =
         await GenerateTopicsAIModel.sendMessage(PROMPT);
 
       const rawText = aiResp.response.text();
 
+      const endTime = performance.now();
+
+      const responseTime = endTime - startTime;
+
       const topicIdea = JSON.parse(rawText);
+
+      console.log("DATA LLM GEMINI PADA LOG UNTUK DIANALISIS:");
+      console.log("Response Time:", (responseTime / 1000).toFixed(2), "seconds");
+      console.log("Input Tokens:", aiResp.usage.inputTokens);
+      console.log("Output Tokens:", aiResp.usage.outputTokens);
+      console.log("Total Tokens:", aiResp.usage.totalTokens);
+      console.log("=======================================");
 
       setTopics(topicIdea?.course_titles || []);
       setselectedTopics([]);
@@ -153,19 +166,15 @@ export default function AddCourse() {
 
     try {
       // Convert array menjadi string 
-      const PROMPT =
-        selectedTopics.join(', ') +
-        Prompt.COURSE;
+      const PROMPT = selectedTopics.join(', ') + Prompt.COURSE;
 
       // 1. REQUEST KE GEMINI
 
-      const aiResp =
-        await GenerateCourseAIModel.sendMessage(PROMPT);
+      const aiResp = await GenerateCourseAIModel.sendMessage(PROMPT);
 
-      const rawText =
-        aiResp.response.text();
+      const rawText = aiResp.response.text();
 
-      console.log(rawText);
+      // console.log(rawText);
 
       // 2. PARSE JSON
 
