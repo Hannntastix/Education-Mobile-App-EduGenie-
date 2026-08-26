@@ -176,7 +176,7 @@ const ProfileScreen = () => {
             <StatCard label="Courses Enrolled" value={courseList?.length} unit="" />
           </View>
 
-          {isMember ? (
+          {/* {isMember ? (
             <View style={styles.mentorStatusContainer}>
               <View style={styles.mentorBadge}>
                 <FontAwesome5 name="crown" size={20} color={Colors.PRIMARY} />
@@ -202,7 +202,7 @@ const ProfileScreen = () => {
                 </View>
               </View>
             </TouchableOpacity>
-          )}
+          )} */}
 
         </View>
 

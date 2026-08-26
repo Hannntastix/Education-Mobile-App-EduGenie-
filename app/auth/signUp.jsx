@@ -24,10 +24,17 @@ export default function SignUp() {
     const [password, setPassword] = useState();
     const [secureTextEntry, setSecureTextEntry] = useState(true);
     const { userDetail, setUserDetail } = useContext(UserDetailContext);
+    const [emailError, setEmailError] = useState('');
+    const [passwordError, setPasswordError] = useState('');
 
     const navigation = useNavigation();
 
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+    const shortPassword = password?.length > 0 && password.length < 8;
+
     const handleSignUp = () => {
+
         createUserWithEmailAndPassword(auth, email, password)
             .then(async (resp) => {
                 const user = resp.user;
@@ -35,7 +42,7 @@ export default function SignUp() {
             })
             .catch(e => {
                 console.log(e.message);
-            })
+            });
     };
 
     const SaveUser = async (user) => {
@@ -98,12 +105,20 @@ export default function SignUp() {
                                     style={styles.input}
                                     placeholder="Enter your email"
                                     placeholderTextColor="#9FA5AA"
-                                    onChangeText={(value) => setEmail(value)}
+                                    onChangeText={(value) => {
+                                        setEmail(value);
+                                        setEmailError("");
+                                    }}
                                     keyboardType="email-address"
                                     autoCapitalize="none"
                                     autoCorrect={false}
                                 />
                             </View>
+                            {email?.trim() !== "" && !emailRegex.test(email) && (
+                                <Text style={{ color: "red", marginTop: 5 }}>
+                                    Email is not valid
+                                </Text>
+                            )}
                         </View>
 
                         {/* Password Input */}
@@ -114,7 +129,10 @@ export default function SignUp() {
                                     style={styles.input}
                                     placeholder="Create a password"
                                     placeholderTextColor="#9FA5AA"
-                                    onChangeText={(value) => setPassword(value)}
+                                    onChangeText={(value) => {
+                                        setPassword(value);
+                                        setPasswordError("");
+                                    }}
                                     secureTextEntry={secureTextEntry}
                                     autoCapitalize="none"
                                 />
@@ -125,6 +143,11 @@ export default function SignUp() {
                                     <Text>{secureTextEntry ? '👁️' : '👁️‍🗨️'}</Text>
                                 </TouchableOpacity>
                             </View>
+                            {shortPassword && (
+                                <Text style={{ color: "red", marginTop: 5 }}>
+                                    Password must be at least 8 characters
+                                </Text>
+                            )}
                         </View>
 
                         {/* Terms and Conditions */}
@@ -138,8 +161,24 @@ export default function SignUp() {
 
                         {/* Sign Up Button */}
                         <TouchableOpacity
-                            style={styles.signUpButton}
+                            style={[
+                                styles.signUpButton,
+                                (!fullName?.trim() ||
+                                    !email?.trim() ||
+                                    !emailRegex.test(email) ||
+                                    !password ||
+                                    password.length < 8) && {
+                                    backgroundColor: "#ccc"
+                                }
+                            ]}
                             onPress={handleSignUp}
+                            disabled={
+                                !fullName?.trim() ||
+                                !email?.trim() ||
+                                !emailRegex.test(email) ||
+                                !password ||
+                                password.length < 8
+                            }
                         >
                             <Text style={styles.signUpButtonText}>Sign Up</Text>
                         </TouchableOpacity>

@@ -2,6 +2,7 @@
   "name": "edugenie",
   "main": "expo-router/entry",
   "version": "1.0.0",
+  "type": "module",
   "scripts": {
     "start": "npx expo start",
     "reset-project": "node ./scripts/reset-project.js",
