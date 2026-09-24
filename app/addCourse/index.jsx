@@ -13,8 +13,8 @@ import React, { useContext, useState, useRef, useEffect } from 'react';
 import Colors from '../../constant/Colors';
 import Button from '../../components/Shared/Button';
 import {
-  GenerateCourseAIModel,
-  GenerateTopicsAIModel
+  GenerateCourseGemini,
+  GenerateTopicsGemini
 } from '../../config/AiModel';
 import Prompt from '../../constant/Prompt';
 import {
@@ -27,6 +27,7 @@ import { UserDetailContext } from '../../context/UserDetailContext';
 import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
+import { GenerateCourseOpenAI, GenerateTopicsOpenAI } from '../../config/OpenAiModel';
 
 const { width } = Dimensions.get('window');
 
@@ -35,6 +36,7 @@ export default function AddCourse() {
   const [userInput, setUserInput] = useState('');
   const [topics, setTopics] = useState([]);
   const [selectedTopics, setselectedTopics] = useState([]);
+  const [selectedLLM, setSelectedLLM] = useState("gemini");
 
   const { userDetail, setUserDetail } = useContext(UserDetailContext);
 
@@ -60,11 +62,11 @@ export default function AddCourse() {
 
   // GENERATE TOPICS
 
-  const onGenerateTopic = async () => {
+  const onGenerateTopicGemini = async () => {
     if (!userInput.trim()) {
       Alert.alert(
-        'Error',
-        'Please enter what you want to learn'
+        "Error",
+        "Please enter what you want to learn"
       );
       return;
     }
@@ -77,7 +79,7 @@ export default function AddCourse() {
       const startTime = performance.now();
 
       const aiResp =
-        await GenerateTopicsAIModel.sendMessage(PROMPT);
+        await GenerateTopicsGemini.sendMessage(PROMPT);
 
       const rawText = aiResp.response.text();
 
@@ -87,12 +89,25 @@ export default function AddCourse() {
 
       const topicIdea = JSON.parse(rawText);
 
-      console.log("DATA LLM GEMINI PADA LOG UNTUK DIANALISIS:");
-      console.log("Response Time:", (responseTime / 1000).toFixed(2), "seconds");
-      console.log("Input Tokens:", aiResp.usage.inputTokens);
-      console.log("Output Tokens:", aiResp.usage.outputTokens);
-      console.log("Total Tokens:", aiResp.usage.totalTokens);
-      console.log("=======================================");
+      console.log("========== GEMINI ==========");
+      console.log(
+        "Response Time:",
+        (responseTime / 1000).toFixed(2),
+        "seconds"
+      );
+      console.log(
+        "Input Tokens:",
+        aiResp.usage.inputTokens
+      );
+      console.log(
+        "Output Tokens:",
+        aiResp.usage.outputTokens
+      );
+      console.log(
+        "Total Tokens:",
+        aiResp.usage.totalTokens
+      );
+      console.log("============================");
 
       setTopics(topicIdea?.course_titles || []);
       setselectedTopics([]);
@@ -105,14 +120,86 @@ export default function AddCourse() {
 
     } catch (error) {
       console.error(
-        'ERROR GENERATING TOPICS:',
+        "ERROR GENERATING TOPICS GEMINI:",
         error
       );
 
       Alert.alert(
-        'Error',
+        "Error",
         error?.message ||
-        'Failed to generate topics. Please try again.'
+        "Failed to generate topics."
+      );
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const onGenerateTopicOpenAI = async () => {
+    if (!userInput.trim()) {
+      Alert.alert(
+        "Error",
+        "Please enter what you want to learn"
+      );
+      return;
+    }
+
+    setLoading(true);
+
+    try {
+      const PROMPT = userInput + Prompt.IDEA;
+
+      const startTime = performance.now();
+
+      const aiResp =
+        await GenerateTopicsOpenAI.sendMessage(PROMPT);
+
+      const rawText = aiResp.response.text();
+
+      const endTime = performance.now();
+
+      const responseTime = endTime - startTime;
+
+      const topicIdea = JSON.parse(rawText);
+
+      console.log("========== OPENAI / XKiro ==========");
+      console.log(
+        "Response Time:",
+        (responseTime / 1000).toFixed(2),
+        "seconds"
+      );
+      console.log(
+        "Input Tokens:",
+        aiResp.usage.inputTokens
+      );
+      console.log(
+        "Output Tokens:",
+        aiResp.usage.outputTokens
+      );
+      console.log(
+        "Total Tokens:",
+        aiResp.usage.totalTokens
+      );
+      console.log("====================================");
+
+      setTopics(topicIdea?.course_titles || []);
+      setselectedTopics([]);
+
+      Animated.timing(fadeAnim, {
+        toValue: 1,
+        duration: 500,
+        useNativeDriver: true,
+      }).start();
+
+    } catch (error) {
+      console.error(
+        "ERROR GENERATING TOPICS OPENAI:",
+        error
+      );
+
+      Alert.alert(
+        "Error",
+        error?.message ||
+        "Failed to generate topics using OpenAI."
       );
     } finally {
       setLoading(false);
@@ -170,7 +257,7 @@ export default function AddCourse() {
 
       // 1. REQUEST KE GEMINI
 
-      const aiResp = await GenerateCourseAIModel.sendMessage(PROMPT);
+      const aiResp = await GenerateCourseGemini.sendMessage(PROMPT);
 
       const rawText = aiResp.response.text();
 
@@ -193,6 +280,120 @@ export default function AddCourse() {
       if (courses.length === 0) {
         throw new Error(
           'Gemini returned an empty courses array.'
+        );
+      }
+
+      console.log(
+        'Number of generated courses:',
+        courses.length
+      );
+
+      // 4. SIMPAN SEMUA COURSE KE FIRESTORE
+
+      const savePromises =
+        courses.map(async (course, index) => {
+
+          // Membuat reference dengan ID otomatis Firestore
+          const courseRef =
+            doc(collection(db, 'courses'));
+
+          // Pastikan data course valid
+          if (!course?.courseTitle) {
+            throw new Error(
+              `Course ${index + 1} does not have courseTitle.`
+            );
+          }
+
+          // Simpan course
+          await setDoc(
+            courseRef,
+            {
+              ...course,
+
+              createdOn: new Date(),
+
+              createdBy:
+                userDetail?.email || null,
+
+              docId: courseRef.id
+            }
+          );
+
+          console.log(
+            `COURSE ${index + 1} SAVED SUCCESSFULLY`
+          );
+
+          return courseRef.id;
+        });
+
+      // Tunggu semua course selesai disimpan
+      const savedCourses =
+        await Promise.all(savePromises);
+
+      console.log(
+        'Saved Course IDs:',
+        savedCourses
+      );
+
+      // 5. PINDAH KE HOME
+
+      router.push('/(tabs)/home');
+
+    } catch (error) {
+
+      console.error(error);
+
+      Alert.alert(
+        'Error',
+        error?.message ||
+        'Failed to generate course. Please try again.'
+      );
+
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const onGenerateCourseOpenAI = async () => {
+    if (selectedTopics.length === 0) {
+      Alert.alert(
+        'Error',
+        'Please select at least one topic'
+      );
+      return;
+    }
+
+    setLoading(true);
+
+    try {
+      // Convert array menjadi string 
+      const PROMPT = selectedTopics.join(', ') + Prompt.COURSE;
+
+      // 1. REQUEST KE GEMINI
+
+      const aiResp = await GenerateCourseOpenAI.sendMessage(PROMPT);
+
+      const rawText = aiResp.response.text();
+
+      // console.log(rawText);
+
+      // 2. PARSE JSON
+
+      const resp = JSON.parse(rawText);
+
+      // 3. AMBIL ARRAY COURSES
+
+      const courses = resp?.courses;
+
+      if (!Array.isArray(courses)) {
+        throw new Error(
+          'OpenAI response does not contain a valid courses array.'
+        );
+      }
+
+      if (courses.length === 0) {
+        throw new Error(
+          'OpenAI returned an empty courses array.'
         );
       }
 
@@ -321,6 +522,47 @@ export default function AddCourse() {
 
           </View>
 
+          <View style={styles.llmContainer}>
+            <Text style={styles.llmLabel}>
+              Choose AI Model
+            </Text>
+
+            <View style={styles.llmSwitch}>
+              <Pressable
+                onPress={() => setSelectedLLM("gemini")}
+                style={[
+                  styles.llmOption,
+                  selectedLLM === "gemini" && styles.llmOptionSelected
+                ]}
+              >
+                <Text
+                  style={[
+                    styles.llmOptionText,
+                    selectedLLM === "gemini" && styles.llmOptionTextSelected
+                  ]}
+                >
+                  Gemini
+                </Text>
+              </Pressable>
+
+              <Pressable
+                onPress={() => setSelectedLLM("openai")}
+                style={[
+                  styles.llmOption,
+                  selectedLLM === "openai" && styles.llmOptionSelected
+                ]}
+              >
+                <Text
+                  style={[
+                    styles.llmOptionText,
+                    selectedLLM === "openai" && styles.llmOptionTextSelected
+                  ]}
+                >
+                  OpenAI
+                </Text>
+              </Pressable>
+            </View>
+          </View>
           {/* Input Section */}
 
           <View style={styles.inputSection}>
@@ -358,11 +600,17 @@ export default function AddCourse() {
             <Button
               text={
                 loading
-                  ? 'Generating Topics...'
-                  : 'Generate Topics'
+                  ? "Generating Topics..."
+                  : selectedLLM === "gemini"
+                    ? "Generate Topics"
+                    : "Generate Topics with OpenAI"
               }
               type="primary"
-              onPress={onGenerateTopic}
+              onPress={
+                selectedLLM === "gemini"
+                  ? onGenerateTopicGemini
+                  : onGenerateTopicOpenAI
+              }
               loading={loading}
               style={styles.generateButton}
             />
@@ -489,13 +737,19 @@ export default function AddCourse() {
               <Button
                 text={
                   loading
-                    ? 'Creating Your Course...'
-                    : 'Create Course'
+                    ? "Generating Topics..."
+                    : selectedLLM === "gemini"
+                      ? "Genetate Course"
+                      : "Generate Course with OpenAI"
                 }
-                onPress={onGenerateCourse}
+                type="primary"
+                onPress={
+                  selectedLLM === "gemini"
+                    ? onGenerateCourse
+                    : onGenerateCourseOpenAI
+                }
                 loading={loading}
                 style={styles.finalButton}
-                icon="rocket-outline"
               />
 
             </Animated.View>
@@ -524,6 +778,46 @@ const styles = StyleSheet.create({
   content: {
     padding: 20,
     paddingTop: 60,
+  },
+  llmContainer: {
+    marginTop: 20,
+    marginBottom: 10,
+  },
+
+  llmLabel: {
+    fontSize: 14,
+    fontWeight: "600",
+    color: Colors.DARK,
+    marginBottom: 10,
+  },
+
+  llmSwitch: {
+    flexDirection: "row",
+    backgroundColor: "#EEF0F7",
+    borderRadius: 12,
+    padding: 4,
+  },
+
+  llmOption: {
+    flex: 1,
+    paddingVertical: 10,
+    alignItems: "center",
+    justifyContent: "center",
+    borderRadius: 9,
+  },
+
+  llmOptionSelected: {
+    backgroundColor: Colors.PRIMARY,
+  },
+
+  llmOptionText: {
+    fontSize: 14,
+    fontWeight: "600",
+    color: Colors.GRAY,
+  },
+
+  llmOptionTextSelected: {
+    color: "white",
   },
   header: {
     flexDirection: 'row',

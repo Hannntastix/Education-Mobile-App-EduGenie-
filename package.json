@@ -36,6 +36,7 @@
     "expo-symbols": "~0.2.2",
     "expo-system-ui": "~4.0.8",
     "expo-web-browser": "~14.0.2",
+    "express": "^5.2.1",
     "firebase": "^11.6.1",
     "mime": "^4.0.7",
     "openai": "^7.4.0",

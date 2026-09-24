@@ -13,7 +13,11 @@ import {
     ScrollView
 } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
-import { createUserWithEmailAndPassword } from 'firebase/auth';
+import {
+    createUserWithEmailAndPassword,
+    sendEmailVerification,
+    reload
+} from 'firebase/auth';
 import { auth, db } from '../../config/firebaseConfig';
 import { doc, setDoc } from 'firebase/firestore';
 import { UserDetailContext } from '../../context/UserDetailContext';
@@ -33,16 +37,26 @@ export default function SignUp() {
 
     const shortPassword = password?.length > 0 && password.length < 8;
 
-    const handleSignUp = () => {
+    const handleSignUp = async () => {
+        try {
+            const resp = await createUserWithEmailAndPassword(
+                auth,
+                email.trim(),
+                password
+            );
 
-        createUserWithEmailAndPassword(auth, email, password)
-            .then(async (resp) => {
-                const user = resp.user;
-                await SaveUser(user);
-            })
-            .catch(e => {
-                console.log(e.message);
+            const user = resp.user;
+
+            await sendEmailVerification(user);
+
+            navigation.navigate('auth/VerifyEmail', {
+                email: user.email
             });
+
+        } catch (e) {
+            console.log(e.code);
+            console.log(e.message);
+        }
     };
 
     const SaveUser = async (user) => {

@@ -56,11 +56,11 @@ function createChatModel(initialHistory = []) {
 
 // GENERATE TOPICS
 
-export const GenerateTopicsAIModel =
+export const GenerateTopicsGemini =
   createChatModel();
 
 // GENERATE COURSE
 
-export const GenerateCourseAIModel =
+export const GenerateCourseGemini =
   createChatModel();
 
